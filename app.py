@@ -3,6 +3,7 @@ from target import Target
 from workflow import Workflow
 from module import Module
 from filter import Filter
+from node import TargetNode
 import os
 
 def load_module_configs() -> list[Module]:
@@ -38,7 +39,7 @@ def get_src_by_id(id: str, type: str) -> object:
     Raises:
         ValueError: If no object with the given ID exists or the source type is invalid.
     """
-    source: list[object] | None = None
+    source = None
 
     match type:
         case "TARGET":
@@ -83,6 +84,9 @@ def add_target():
     target = Target(ip)
     target_pool.add(ip)
     targets.append(target)
+
+    workflow.update_targets(list(target_pool))
+
     return jsonify(target.to_dict())
 
 @app.route("/targets/<target_id>", methods=["DELETE"])
@@ -168,7 +172,8 @@ def get_node_config(node_id):
 def update_node_config(node_id):
     node = workflow.get_node(node_id)
 
-    node.update_config(request.json)
+    if not isinstance(node, TargetNode):
+        node.update_config(request.json)
 
     return jsonify({
         **node.to_dict(),

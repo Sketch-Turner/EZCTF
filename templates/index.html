@@ -286,6 +286,37 @@
 
         const workflowList = document.getElementById("workflow-target-list");
         workflowList.appendChild(workflowTarget);
+
+        refreshTargetNodes();
+    }
+
+    /**
+     * Refresh all target nodes in the workflow canvas.
+     *
+     * Updates the HTML content of each target node from the server.
+     */
+    function refreshTargetNodes() {
+        document
+            .querySelectorAll('.workflow-node[data-type="TARGET"]')
+            .forEach(async node => {
+                const id = node.dataset.id;
+                console.log("Updating: ", id);
+
+                const response = await fetch(`/workflow/nodes/${id}/config`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: "{}"
+                });
+                if (!response.ok)
+                    return;
+
+                const html = await response.text()
+
+                node.innerHTML = JSON.parse(html).html;
+                addConnectionPoints(node);
+            });
     }
 
     /**

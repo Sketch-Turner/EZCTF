@@ -7,7 +7,7 @@ class Workflow:
         """
         self.nodes = []
         self.edges = []
-        self.targets = []
+        self.targets = [] # target nodes
 
     def add_node(self, type: str, source: object, x: int = 0, y: int = 0) -> Node:
         """
@@ -200,3 +200,15 @@ class Workflow:
 
         for n in next:
             self.dfs(n, output)
+
+    def update_targets(self, target_pool:list):
+        """
+        Updates any TARGET node with multiple targets to match `target_pool`. 
+
+        Args:
+            target_pool (list): List of all targets.
+        """
+        for node in self.targets:
+            if isinstance(node.data["tgt_ip"], list):
+                node.data["tgt_ip"] = target_pool
+                node.data["name"] = target_pool
