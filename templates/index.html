@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Interface</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('targets', this)">Targets</div>
+    <div class="tab" onclick="showTab('modules', this)">Modules</div>
+    <div class="tab" onclick="showTab('workflow', this)">Workflow</div>
+</div>
+
+<div id="targets" class="content active">
+    <div class="split-view">
+        <div class="sidebar">
+            <div class="add-target">
+                <input
+                    type="text"
+                    id="target-input"
+                    placeholder="IP address"
+                    onkeydown="if(event.key === 'Enter') addTarget()">
+                <button onclick="addTarget()">Add</button>
+            </div>
+
+            <div class="target-list">
+                {% for target in targets %}
+                <div class="target {% if loop.first %}active{% endif %}"
+                    onclick="selectTarget(this)"
+                    data-id="{{ target.id }}"
+                    data-ip="{{ target.tgt_ip }}">
+                    {{ target.name }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="details">
+            <h2 id="target-title">
+                {% if targets %}
+                    {{ targets[0].tgt_ip }}
+                {% endif %}
+            </h2>
+
+            <button class="remove-button" onclick="removeTarget()">
+                Remove
+            </button>
+
+            <table class="info-table">
+                <tr>
+                    <th>IP</th>
+                    <td id="target-ip">
+                        {% if targets %}
+                            {{ targets[0].tgt_ip }}
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modules" class="content">
+
+    <div class="split-view">
+
+        <div class="sidebar">
+
+            <div class="module-list">
+                {% for module in modules %}
+                <div class="module {% if loop.first %}active{% endif %}"
+                    onclick="selectModule(this)"
+                    data-id="{{ module.id }}"
+                    data-module='{{ module.to_dict() | tojson }}'>
+                    {{ module.name }}
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+
+        <div class="details module-details">
+
+            <h2 id="module-name"></h2>
+
+            <div class="module-meta">
+                <div class="info-card">
+                    <span class="label">Author</span>
+                    <span id="module-author"></span>
+                </div>
+                <div class="info-card">
+                    <span class="label">Version</span>
+                    <span id="module-version"></span>
+                </div>
+                <div class="info-card">
+                    <span class="label">Platform</span>
+                    <span id="module-platform"></span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Description</h3>
+                <p id="module-description"></p>
+            </div>
+
+
+            <div class="section">
+                <h3>Inputs</h3>
+                <div id="module-inputs" class="io-list"></div>
+            </div>
+
+
+            <div class="section">
+                <h3>Outputs</h3>
+                <div id="module-outputs" class="output-list"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="workflow" class="content">
+    <div class="split-view">
+
+        <div class="sidebar workflow-sidebar">
+            <h3>Targets</h3>
+            <div class="workflow-list">
+                <div class="workflow-item" 
+                    draggable="true"
+                    data-id="ALL"
+                    data-type="TARGET">
+                    All
+                </div>
+                {% for target in targets %}
+                <div class="workflow-item target-item"
+                    draggable="true"
+                    data-id="{{ target.id }}"
+                    data-type="TARGET">
+                    {{ target.tgt_ip }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <h3>Modules</h3>
+            <div class="workflow-list">
+                {% for module in modules %}
+                <div class="workflow-item module-item"
+                     draggable="true"
+                     data-id="{{ module.id }}"
+                     data-type="MODULE">
+                    {{ module.name }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <h3>Filters</h3>
+            <div class="workflow-list">
+                {% for filter in filters %}
+                <div class="workflow-item"
+                    draggable="true"
+                    data-id="{{ filter.id }}"
+                    data-type="FILTER">
+                    New
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="workflow-canvas">
+            <div id="node-config-dialog" class="modal">
+                <div class="modal-content">
+                    <div id="node-config-body"></div>
+
+                    <div class="config-actions">
+                        <button class="btn btn-primary" id="config-save">
+                            Apply
+                        </button>
+                        <button class="btn" onclick="closeNodeConfig()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="workflow-chain">
+                <svg id="workflow-edges"></svg>
+            </div>
+            <div class="workflow-actions">
+                <button id="run-workflow-btn">
+                    ▶ Run
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    /**
+     * Switch the active content tab.
+     *
+     * @param {string} id - ID of the content section to display.
+     * @param {HTMLElement} tab - Tab element to mark as active.
+     */
+    function showTab(id, tab) {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".content").forEach(c => c.classList.remove("active"));
+
+        tab.classList.add("active");
+        document.getElementById(id).classList.add("active");
+    }
+
+    /**
+     * Select and display a target.
+     *
+     * @param {HTMLElement} element - Target element to mark as active.
+     */
+    function selectTarget(element) {
+        document.querySelectorAll(".target")
+            .forEach(t => t.classList.remove("active"));
+
+        element.classList.add("active");
+
+        document.getElementById("target-title").textContent = element.dataset.tgt_ip;
+        document.getElementById("target-ip").textContent = element.dataset.tgt_ip;
+    }
+
+    /**
+     * Add a new target to the target list.
+     *
+     * Sends the target IP to the server, creates a target element,
+     * and updates the selected target.
+     *
+     * @async
+     * @returns {Promise<void>}
+     */
+    async function addTarget() {
+        const input = document.getElementById("target-input");
+        const ip = input.value.trim();
+
+        if (!ip)
+            return;
+
+        const response = await fetch("/targets", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ "tgt_ip": ip })
+        });
+
+        if (!response.ok)
+            return;
+
+        const targetData = await response.json();
+
+        const target = document.createElement("div");
+        target.className = "target";
+        target.dataset.tgt_ip = targetData.tgt_ip;
+        target.textContent = targetData.tgt_ip;
+
+        target.onclick = function () {
+            selectTarget(this);
+        };
+
+        document.querySelector(".target-list").appendChild(target);
+
+        input.value = "";
+
+        selectTarget(target);
+    }
+
+    /**
+     * Remove the currently selected target.
+     *
+     * Sends a delete request to the server, removes the target element,
+     * and selects the next available target.
+     *
+     * @async
+     * @returns {Promise<void>}
+     */
+    async function removeTarget() {
+        const selected = document.querySelector(".target.active");
+
+        if (!selected)
+            return;
+
+        const id = selected.dataset.id;
+
+        const response = await fetch(`/targets/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok)
+            return;
+
+        selected.remove();
+
+        document.getElementById("target-title").textContent = "";
+        document.getElementById("target-ip").textContent = "";
+
+        const firstTarget = document.querySelector(".target");
+
+        if (firstTarget) {
+            selectTarget(firstTarget);
+        }
+    }
+
+    /**
+     * Select and display module information.
+     *
+     * @param {HTMLElement} element - Module element to mark as active.
+     */
+    function selectModule(element) {
+        document.querySelectorAll(".module")
+            .forEach(m => m.classList.remove("active"));
+
+        element.classList.add("active");
+
+        const module = JSON.parse(element.dataset.module);
+
+        document.getElementById("module-name").textContent = module.name;
+        document.getElementById("module-author").textContent = module.author;
+        document.getElementById("module-version").textContent = module.version;
+        document.getElementById("module-platform").textContent = module.platform;
+        document.getElementById("module-description").textContent = module.description;
+
+
+        const inputs = document.getElementById("module-inputs");
+        inputs.innerHTML = "";
+
+        for (const [key, value] of Object.entries(module.inputs || {})) {
+            inputs.innerHTML += `
+                <div class="io-item">
+                    <span>${key}</span>
+                    <span>${value}</span>
+                </div>
+            `;
+        }
+
+
+        const outputs = document.getElementById("module-outputs");
+        outputs.innerHTML = "";
+
+        for (const output of module.outputs || []) {
+            outputs.innerHTML += `
+                <span class="output-tag">${output}</span>
+            `;
+        }
+    }
+
+    /**
+     * Load the workflow state from the server.
+     *
+     * Retrieves workflow nodes and edges, then renders them in the interface.
+     *
+     * @async
+     * @returns {Promise<void>}
+     */
+    async function loadWorkflow() {
+        const response = await fetch("/workflow");
+        const workflow = await response.json();
+
+        workflow.nodes.forEach(node => {
+            createWorkflowNode(node);
+        });
+
+        workflow.edges.forEach(edge => {
+            drawEdge(edge);
+            updateConnectionVisibility();
+        });
+    }
+
+    loadWorkflow();
+
+    // Run workflow when the run button is clicked.
+    document.getElementById("run-workflow-btn").addEventListener("click", async () => {
+        const response = await fetch("/workflow/run", {
+            method: "GET"
+        });
+
+        const result = await response.json();
+
+        console.log(result);
+    });
+
+    // Store workflow item data when dragging begins.
+    document.querySelectorAll(".workflow-item").forEach(item => {
+        item.addEventListener("dragstart", event => {
+            event.dataTransfer.setData("id", item.dataset.id);
+            event.dataTransfer.setData("type", item.dataset.type);
+        });
+    });
+
+
+    let dragDepth = 0;
+    const workflowChain = document.getElementById("workflow-chain");
+
+    // Highlight the workflow area while an item is dragged over it.
+    workflowChain.addEventListener("dragenter", event => {
+        event.preventDefault();
+        dragDepth++;
+
+        workflowChain.classList.add("add-mode");
+    });
+
+    // Remove workflow area highlight when dragging leaves.
+    workflowChain.addEventListener("dragleave", event => {
+        event.preventDefault();
+        dragDepth--;
+
+        if (dragDepth === 0) {
+            workflowChain.classList.remove("add-mode");
+        }
+    });
+
+    // Allow items to be dropped onto the workflow area.
+    workflowChain.addEventListener("dragover", event => {
+        event.preventDefault();
+    });
+
+    // Create a workflow node when an item is dropped onto the canvas.
+    workflowChain.addEventListener("drop", async event => {
+        event.preventDefault();
+
+        dragDepth = 0;
+        workflowChain.classList.remove("add-mode");
+
+        const id = event.dataTransfer.getData("id");
+        const type = event.dataTransfer.getData("type");
+
+        if (!id || !type)
+            return;
+
+        const rect = workflowChain.getBoundingClientRect();
+
+        const response = await fetch("/workflow/nodes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                type: type,
+                source_id: id,
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            })
+        });
+
+        createWorkflowNode(await response.json());
+    });
+
+    /**
+     * Create and add a workflow node to the canvas.
+     *
+     * @param {Object} node - Workflow node data.
+     * @param {string} node.id - Unique node identifier.
+     * @param {string} node.type - Node type.
+     * @param {string} node.html - HTML content for the node.
+     * @param {number} node.x - X-coordinate position on the canvas.
+     * @param {number} node.y - Y-coordinate position on the canvas.
+     */
+    function createWorkflowNode(node) {
+        const div = document.createElement("div");
+
+        div.className = "workflow-node";
+
+        div.dataset.id = node.id;
+        div.dataset.type = node.type;
+
+        div.innerHTML = node.html;
+
+        div.style.left = `${node.x}px`;
+        div.style.top = `${node.y}px`;
+
+        addConnectionPoints(div);
+
+        enableNodeDrag(div);
+        div.addEventListener("dblclick", () => {
+            openNodeConfig(div.dataset.id);
+        });
+
+        workflowChain.appendChild(div);
+    }
+
+    /**
+     * Enable dragging behavior for a workflow node.
+     *
+     * @param {HTMLElement} node - Workflow node element to make draggable.
+     */
+    function enableNodeDrag(node) {
+        let offsetX;
+        let offsetY;
+        let deleting = false;
+
+        node.addEventListener("mousedown", event => {
+            offsetX = event.clientX - node.offsetLeft;
+            offsetY = event.clientY - node.offsetTop;
+
+            node.classList.add("dragging");
+
+            function move(event) {
+                const x = event.clientX - offsetX;
+                const y = event.clientY - offsetY;
+
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+
+                updateEdges(node.dataset.id);
+
+                deleting =
+                    x + node.offsetWidth < 0 ||
+                    y + node.offsetHeight < 0 ||
+                    x > workflowChain.clientWidth ||
+                    y > workflowChain.clientHeight;
+
+                workflowChain.classList.toggle("delete-mode", deleting);
+            }
+
+            async function stop() {
+                document.removeEventListener("mousemove", move);
+                document.removeEventListener("mouseup", stop);
+
+                workflowChain.classList.remove("delete-mode");
+                node.classList.remove("dragging");
+
+                if (deleting) {
+                    await fetch(`/workflow/nodes/${node.dataset.id}`, {
+                        method: "DELETE"
+                    });
+
+                    removeNodeEdges(node.dataset.id);
+                    node.remove();
+                    updateConnectionVisibility();
+                    return;
+                }
+
+                await fetch(`/workflow/nodes/${node.dataset.id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        x: node.offsetLeft,
+                        y: node.offsetTop
+                    })
+                });
+            }
+
+            document.addEventListener("mousemove", move);
+            document.addEventListener("mouseup", stop);
+        });
+    }
+
+    /**
+     * Add connection points to a workflow node based on its type.
+     *
+     * @param {HTMLElement} node - Workflow node element to add connection points to.
+     */
+    function addConnectionPoints(node) {
+        switch (node.dataset.type) {
+            case "TARGET":
+                addOutput(node);
+                break;
+
+            case "MODULE":
+            case "FILTER":
+                addInput(node);
+                addOutput(node);
+                break;
+        }
+    }
+
+    /**
+     * Add an input connection point to a workflow node.
+     *
+     * @param {HTMLElement} node - Workflow node element to add the input point to.
+     */
+    function addInput(node) {
+        const input = document.createElement("div");
+        input.className = "connection-point connection-left";
+        node.appendChild(input);
+    }
+
+    /**
+     * Add an output connection point to a workflow node.
+     *
+     * @param {HTMLElement} node - Workflow node element to add the output point to.
+     */
+    function addOutput(node) {
+        const output = document.createElement("div");
+        output.className = "connection-point connection-right";
+        node.appendChild(output);
+
+        enableEdgeDrag(output);
+    }
+
+    let activeEdge = null;
+
+    /**
+     * Enable edge creation from a connection point.
+     *
+     * @param {HTMLElement} point - Output connection point element.
+     */
+    function enableEdgeDrag(point) {
+        point.addEventListener("mousedown", event => {
+            event.stopPropagation();
+
+            activeEdge = {
+                source: point.closest(".workflow-node"),
+                line: createEdgeLine()
+            };
+
+            document.addEventListener(
+                "mousemove",
+                moveEdge
+            );
+
+            document.addEventListener(
+                "mouseup",
+                endEdge
+            );
+        });
+    }
+
+    /**
+     * Create an SVG path element for a workflow edge.
+     *
+     * @returns {SVGPathElement} Newly created SVG path element.
+     */
+    function createEdgeLine() {
+        const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#3498db");
+        path.setAttribute("stroke-width", "2");
+
+        document
+            .getElementById("workflow-edges")
+            .appendChild(path);
+
+        return path;
+    }
+
+    /**
+     * Update the active edge position while dragging.
+     *
+     * @param {MouseEvent} event - Mouse movement event.
+     */
+    function moveEdge(event) {
+        if (!activeEdge)
+            return;
+
+        const start = getConnectionPosition(
+            activeEdge.source.querySelector(".connection-right")
+        );
+
+        const rect = workflowChain.getBoundingClientRect();
+
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const distance = Math.abs(x - start.x) * 0.5;
+
+        activeEdge.line.setAttribute(
+            "d",
+            `
+            M ${start.x} ${start.y}
+            C ${start.x + distance} ${start.y},
+            ${x - distance} ${y},
+            ${x} ${y}
+            `
+        );
+    }
+
+    /**
+     * Complete edge creation when dragging ends.
+     *
+     * @async
+     * @param {MouseEvent} event - Mouse release event.
+     * @returns {Promise<void>}
+     */
+    async function endEdge(event) {
+        const target = event.target.closest(".workflow-node");
+
+        if (target && activeEdge) {
+            const source = activeEdge.source;
+
+            if (source !== target) {
+                const response = await fetch("/workflow/edges", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        source: source.dataset.id,
+                        destination: target.dataset.id
+                    })
+                });
+
+                const edge = await response.json();
+
+                drawEdge(edge);
+                updateConnectionVisibility();
+            }
+        }
+
+        if (activeEdge?.line)
+            activeEdge.line.remove();
+
+        activeEdge = null;
+
+        document.removeEventListener(
+            "mousemove",
+            moveEdge
+        );
+
+        document.removeEventListener(
+            "mouseup",
+            endEdge
+        );
+    }
+
+    /**
+     * Draw a workflow edge on the canvas.
+     *
+     * @param {Object} edge - Workflow edge data.
+     * @param {string} edge.id - Unique edge identifier.
+     * @param {string} edge.source - Source node identifier.
+     * @param {string} edge.destination - Destination node identifier.
+     */
+    function drawEdge(edge) {
+        const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+        path.dataset.id = edge.id;
+        path.dataset.source = edge.source;
+        path.dataset.destination = edge.destination;
+
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#3498db");
+        path.setAttribute("stroke-width", "2");
+
+        document
+            .getElementById("workflow-edges")
+            .appendChild(path);
+
+        updateEdgePosition(path);
+    }
+
+    /**
+     * Update positions of edges connected to a node.
+     *
+     * @param {string} nodeId - ID of the node whose edges should be updated.
+     */
+    function updateEdges(nodeId) {
+        document
+            .querySelectorAll("#workflow-edges path")
+            .forEach(line => {
+                if (
+                    line.dataset.source === nodeId ||
+                    line.dataset.destination === nodeId
+                ) {
+                    updateEdgePosition(line);
+                }
+            });
+    }
+
+    /**
+     * Update the position of a workflow edge.
+     *
+     * @param {SVGPathElement} edge - SVG path element representing the edge.
+     */
+    function updateEdgePosition(edge) {
+        const source = document.querySelector(
+            `[data-id="${edge.dataset.source}"]`
+        );
+
+        const destination = document.querySelector(
+            `[data-id="${edge.dataset.destination}"]`
+        );
+
+        if (!source || !destination)
+            return;
+
+        const start = getConnectionPosition(
+            source.querySelector(".connection-right")
+        );
+
+        const end = getConnectionPosition(
+            destination.querySelector(".connection-left")
+        );
+
+        const distance = Math.abs(end.x - start.x) * 0.5;
+
+        const path = `
+            M ${start.x} ${start.y}
+            C ${start.x + distance} ${start.y},
+            ${end.x - distance} ${end.y},
+            ${end.x} ${end.y}
+        `;
+
+        edge.setAttribute(
+            "d",
+            path
+        );
+    }
+
+    /**
+     * Get the position of a connection point relative to the workflow canvas.
+     *
+     * @param {HTMLElement} element - Connection point element.
+     * @returns {{x: number, y: number}} Position relative to the canvas.
+     */
+    function getConnectionPosition(element) {
+        const rect = element.getBoundingClientRect();
+        const canvas = workflowChain.getBoundingClientRect();
+
+        return {
+            x: rect.left - canvas.left + rect.width / 2,
+            y: rect.top - canvas.top + rect.height / 2
+        };
+    }
+
+    /**
+     * Load and draw workflow edges.
+     *
+     * @param {Array<Object>} edges - List of workflow edge data.
+     */
+    function loadEdges(edges) {
+        edges.forEach(edge => {
+            drawEdge(edge);
+            updateConnectionVisibility();
+        });
+    }
+
+    /**
+     * Remove all edges connected to a workflow node.
+     *
+     * @param {string} nodeId - ID of the node whose edges should be removed.
+     */
+    function removeNodeEdges(nodeId) {
+        document
+            .querySelectorAll("#workflow-edges path")
+            .forEach(edge => {
+                if (
+                    edge.dataset.source === nodeId ||
+                    edge.dataset.destination === nodeId
+                ) {
+                    edge.remove();
+                }
+            });
+    }
+
+    /**
+     * Update connection point styling based on existing workflow edges.
+     */
+    function updateConnectionVisibility() {
+        document
+            .querySelectorAll(".connection-point")
+            .forEach(point => {
+                point.classList.remove("connected");
+            });
+
+        document
+            .querySelectorAll("#workflow-edges path")
+            .forEach(edge => {
+                const source = document.querySelector(
+                    `[data-id="${edge.dataset.source}"]`
+                );
+
+                const destination = document.querySelector(
+                    `[data-id="${edge.dataset.destination}"]`
+                );
+
+                if (source) {
+                    source
+                        .querySelector(".connection-right")
+                        ?.classList.add("connected");
+                }
+
+                if (destination) {
+                    destination
+                        .querySelector(".connection-left")
+                        ?.classList.add("connected");
+                }
+            });
+    }
+
+    /**
+     * Open the configuration dialog for a workflow node.
+     *
+     * @async
+     * @param {string} nodeId - ID of the node to configure.
+     * @returns {Promise<void>}
+     */
+    async function openNodeConfig(nodeId) {
+        const response = await fetch(`/workflow/nodes/${nodeId}/config`);
+        const html = await response.text();
+
+        document.getElementById("node-config-body").innerHTML = html;
+
+        document.getElementById("config-save").onclick = () => {
+            saveNodeConfig(nodeId);
+        };
+
+        document
+            .getElementById("node-config-dialog")
+            .classList.add("open");
+    }
+
+    /**
+     * Save the configuration of a workflow node.
+     *
+     * @async
+     * @param {string} nodeId - ID of the node to update.
+     * @returns {Promise<void>}
+     */
+    async function saveNodeConfig(nodeId) {
+        const data = {};
+
+        document
+            .getElementById("node-config-body")
+            .querySelectorAll("input, textarea, select")
+            .forEach(field => {
+                if (field.name) {
+                    data[field.name] = field.value;
+                }
+            });
+
+        const response = await fetch(
+            `/workflow/nodes/${nodeId}/config`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }
+        );
+
+        const node = await response.json();
+
+        updateWorkflowNode(node);
+
+        closeNodeConfig();
+    }
+
+    /**
+     * Update an existing workflow node with new data.
+     *
+     * @param {Object} data - Updated workflow node data.
+     * @param {string} data.id - Node identifier.
+     * @param {string} data.type - Node type.
+     * @param {Object} data.data - Node configuration data.
+     * @param {string} data.html - Updated node HTML content.
+     */
+    function updateWorkflowNode(data) {
+        const node = document.querySelector(
+            `[data-id="${data.id}"]`
+        );
+
+        if (!node)
+            return;
+
+        node.dataset.type = data.type;
+        node.dataset.data = JSON.stringify(data.data);
+
+        node.innerHTML = data.html;
+
+        addConnectionPoints(node);
+        updateConnectionVisibility()
+    }
+
+    /**
+     * Close the node configuration dialog.
+     */
+    function closeNodeConfig() {
+        document
+            .getElementById("node-config-dialog")
+            .classList.remove("open");
+
+        document
+            .getElementById("node-config-body")
+            .innerHTML = "";
+    }
+
+
+</script>
+
+</body>
+</html>
