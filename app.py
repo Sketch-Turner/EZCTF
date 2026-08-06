@@ -95,6 +95,7 @@ def remove_target(target_id):
 
     targets = [t for t in targets if t.id != target_id]
     target_pool = set([t.tgt_ip for t in targets])
+    workflow.update_targets(list(target_pool))
 
     return jsonify({"success": True})
 

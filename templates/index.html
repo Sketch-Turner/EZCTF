@@ -32,7 +32,7 @@
                 <div class="target {% if loop.first %}active{% endif %}"
                     onclick="selectTarget(this)"
                     data-id="{{ target.id }}"
-                    data-ip="{{ target.tgt_ip }}">
+                    data-tgt_ip="{{ target.tgt_ip }}">
                     {{ target.name }}
                 </div>
                 {% endfor %}
@@ -53,7 +53,7 @@
             <table class="info-table">
                 <tr>
                     <th>IP</th>
-                    <td id="target-ip">
+                    <td id="target-tgt_ip">
                         {% if targets %}
                             {{ targets[0].tgt_ip }}
                         {% endif %}
@@ -229,7 +229,7 @@
         element.classList.add("active");
 
         document.getElementById("target-title").textContent = element.dataset.tgt_ip;
-        document.getElementById("target-ip").textContent = element.dataset.tgt_ip;
+        document.getElementById("target-tgt_ip").textContent = element.dataset.tgt_ip;
     }
 
     /**
@@ -263,6 +263,7 @@
 
         const target = document.createElement("div");
         target.className = "target";
+        target.dataset.id = targetData.id;
         target.dataset.tgt_ip = targetData.tgt_ip;
         target.textContent = targetData.tgt_ip;
 
@@ -346,13 +347,22 @@
         selected.remove();
 
         document.getElementById("target-title").textContent = "";
-        document.getElementById("target-ip").textContent = "";
+        document.getElementById("target-tgt_ip").textContent = "";
 
         const firstTarget = document.querySelector(".target");
 
         if (firstTarget) {
             selectTarget(firstTarget);
         }
+
+        const workflowTarget = document.querySelector(
+            `.workflow-item[data-type="TARGET"][data-id="${id}"]`
+        );
+
+        if (workflowTarget)
+            workflowTarget.remove();
+
+        refreshTargetNodes();
     }
 
     /**
