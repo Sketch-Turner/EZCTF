@@ -29,6 +29,8 @@ class Module:
         self.description = data.get("description")
 
         self.inputs = data.get("inputs", {}) # input values
+        self.inputs['source_id'] = None
+        self.inputs['root_id'] = None
         self.config = [k for k, v in self.inputs.items() if v is not None] # config key names
         self.outputs = data.get("outputs", []) # output values
 
@@ -107,7 +109,6 @@ class Module:
         Outputs:
             dict: Module output values matching configured outputs.
         """
-        print(f"    Input: {self.inputs}")
         result = self._module.run(self.inputs)
 
         return {

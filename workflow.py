@@ -1,4 +1,6 @@
 from node import *
+from target import Target
+from history import History
 
 class Workflow:
     def __init__(self):
@@ -164,9 +166,31 @@ class Workflow:
             "edges": self.get_edges()
         }
 
-    def run(self) -> dict:
+    def get_root_id(self, ip: str, targets:list[Target]) -> str | None:
+        """
+        Find the workflow target node ID for an IP address.
+
+        Inputs:
+            ip (str): Target IP address.
+            targets (list[Target]): List of target objects.
+
+        Outputs:
+            str | None: Matching target node ID, or None if no match is found.
+        """
+        for t in targets:
+            tgt = t.tgt_ip
+            if isinstance(tgt, str):
+                if ip == tgt:
+                    return t.id
+
+        return None
+
+    def run(self, targets:list[Target]) -> dict:
         """
         Execute the workflow starting from each target node.
+
+        Inputs:
+            targets (list[Target]): List of target objects.
 
         Outputs:
             dict: Workflow execution results.
@@ -175,8 +199,11 @@ class Workflow:
             ip_list = t.get_ips()
 
             for ip in ip_list:
+                root_id = self.get_root_id(ip, targets)
+                History.write(root_id=root_id, source_id=root_id, message="Workflow started")
                 for node in t.get_next():
-                    self.dfs(node, {'tgt_ip':ip})
+                    self.dfs(node, {'tgt_ip':ip, 'root_id':root_id})
+                History.write(root_id=root_id, source_id=root_id, message="Workflow complete")
 
         return {}
 
@@ -188,9 +215,8 @@ class Workflow:
             node (Node): Current workflow node to execute.
             input (dict): Input data passed into the node.
         """
-        print(f"Run: {node.type} {input}")
+        input['source_id'] = node.id
         output = node.run(input)
-        print(f"    Output: {output}")
         if len(output) == 0:
             return
 

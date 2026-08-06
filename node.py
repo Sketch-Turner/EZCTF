@@ -2,6 +2,7 @@ from uuid import uuid4
 from filter import Filter
 from target import Target
 from module import Module
+from history import History
 
 class Node:
     """
@@ -178,8 +179,18 @@ class FilterNode(Node):
         Outputs:
             dict: Filtered input data if filter is valid and data matches, otherwise an empty dictionary.
         """
+        if History.verbose:
+            History.write(root_id=input['root_id'], source_id=self.id, message=f"==Filter==\n    Input: {input}\n    Expression: {self._filter.expression}")
         if self._filter.valid:
-            return self._filter.apply(input)
+            output = self._filter.apply(input)
+            if History.verbose:
+                if output != input:
+                    History.write(root_id=input['root_id'], source_id=self.id, message=f"Rejected")
+                else:
+                    History.write(root_id=input['root_id'], source_id=self.id, message=f"Match")
+            return output
+        if History.verbose:
+            History.write(root_id=input['root_id'], source_id=self.id, message=f"Invalid expression")
         return {}
 
 class ModuleNode(Node):
@@ -259,7 +270,6 @@ class ModuleNode(Node):
         self._module.update_inputs(data)
         self.data = self._module.to_dict()
 
-
     def run(self, input: dict) -> dict:
         """
         Execute the module using input data.
@@ -270,8 +280,15 @@ class ModuleNode(Node):
         Outputs:
             dict: Module execution results.
         """
+        input['source_id'] = self.id
         self._module.update_inputs(input)
-        return self._module.run()
+        if History.verbose:
+            History.write(root_id=input['root_id'], source_id=self.id, message=f"Starting module: {self._module.name}\n    Input: {self._module.inputs}")
+        result = self._module.run()
+        result['root_id'] = input['root_id']
+        if History.verbose:
+            History.write(root_id=input['root_id'], source_id=self.id, message=f"Module complete\n    Output: {result}")
+        return result
 
 class Edge:
     """

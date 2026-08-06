@@ -75,7 +75,6 @@ def index():
 def add_target():
     data = request.get_json()
 
-    print(data)
     ip = data.get("tgt_ip")
 
     if not ip:
@@ -183,7 +182,7 @@ def update_node_config(node_id):
 
 @app.route("/workflow/run")
 def run_workflow():
-    return workflow.run()
+    return workflow.run(targets)
 
 
 if __name__ == "__main__":

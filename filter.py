@@ -47,7 +47,6 @@ class Filter:
         """
         tokens = Filter.tokenize(self.expression)
 
-        print(f"    Input: {tokens} {input}")
         if Filter.parse_or(tokens, 0, input)[0]:
             return input
         return {}

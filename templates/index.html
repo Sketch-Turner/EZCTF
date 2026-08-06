@@ -50,16 +50,14 @@
                 Remove
             </button>
 
-            <table class="info-table">
-                <tr>
-                    <th>IP</th>
-                    <td id="target-tgt_ip">
-                        {% if targets %}
-                            {{ targets[0].tgt_ip }}
-                        {% endif %}
-                    </td>
-                </tr>
-            </table>
+            <div class="history-panel">
+                <div class="history-header">
+                    History
+                </div>
+
+                <div id="history-log" class="history-log">
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -229,7 +227,6 @@
         element.classList.add("active");
 
         document.getElementById("target-title").textContent = element.dataset.tgt_ip;
-        document.getElementById("target-tgt_ip").textContent = element.dataset.tgt_ip;
     }
 
     /**
@@ -347,7 +344,6 @@
         selected.remove();
 
         document.getElementById("target-title").textContent = "";
-        document.getElementById("target-tgt_ip").textContent = "";
 
         const firstTarget = document.querySelector(".target");
 
@@ -1056,7 +1052,6 @@
             .getElementById("node-config-body")
             .innerHTML = "";
     }
-
 
 </script>
 

@@ -1,5 +1,4 @@
-from icmplib import ping, Host
-
+from icmplib import ping
 
 def run(config):
     target = config.get("tgt_ip", None)
