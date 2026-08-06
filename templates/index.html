@@ -131,8 +131,8 @@
 
         <div class="sidebar workflow-sidebar">
             <h3>Targets</h3>
-            <div class="workflow-list">
-                <div class="workflow-item" 
+            <div class="workflow-list" id="workflow-target-list">
+                <div class="workflow-item target-item" 
                     draggable="true"
                     data-id="ALL"
                     data-type="TARGET">
@@ -163,7 +163,7 @@
             <h3>Filters</h3>
             <div class="workflow-list">
                 {% for filter in filters %}
-                <div class="workflow-item"
+                <div class="workflow-item filter-item"
                     draggable="true"
                     data-id="{{ filter.id }}"
                     data-type="FILTER">
@@ -275,6 +275,17 @@
         input.value = "";
 
         selectTarget(target);
+
+        const workflowTarget = document.createElement("div");
+
+        workflowTarget.className = "workflow-item target-item";
+        workflowTarget.draggable = true;
+        workflowTarget.dataset.id = targetData.id;
+        workflowTarget.dataset.type = "TARGET";
+        workflowTarget.textContent = targetData.tgt_ip;
+
+        const workflowList = document.getElementById("workflow-target-list");
+        workflowList.appendChild(workflowTarget);
     }
 
     /**
@@ -392,11 +403,14 @@
     });
 
     // Store workflow item data when dragging begins.
-    document.querySelectorAll(".workflow-item").forEach(item => {
-        item.addEventListener("dragstart", event => {
-            event.dataTransfer.setData("id", item.dataset.id);
-            event.dataTransfer.setData("type", item.dataset.type);
-        });
+    document.addEventListener("dragstart", event => {
+        const item = event.target.closest(".workflow-item");
+
+        if (!item)
+            return;
+
+        event.dataTransfer.setData("id", item.dataset.id);
+        event.dataTransfer.setData("type", item.dataset.type);
     });
 
 
@@ -819,10 +833,15 @@
     }
 
     /**
+     * @typedef {Object} Point
+     * @property {number} x
+     * @property {number} y
+     */
+    /**
      * Get the position of a connection point relative to the workflow canvas.
      *
      * @param {HTMLElement} element - Connection point element.
-     * @returns {{x: number, y: number}} Position relative to the canvas.
+     * @returns {Point} Position relative to the canvas.
      */
     function getConnectionPosition(element) {
         const rect = element.getBoundingClientRect();
