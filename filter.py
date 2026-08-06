@@ -10,7 +10,7 @@ class Filter:
         """
         Initialize a filter.
 
-        Inputs:
+        Args:
             expression (str): Filter expression to evaluate.
         """
         self.id = str(uuid.uuid4())
@@ -21,7 +21,7 @@ class Filter:
         """
         Convert filter attributes into a dictionary.
 
-        Outputs:
+        Returns:
             dict: Filter attributes excluding private fields.
         """
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
@@ -30,7 +30,7 @@ class Filter:
         """
         Create a copy of the filter.
 
-        Outputs:
+        Returns:
             Filter: New filter instance with the same expression.
         """
         return Filter(self.expression)
@@ -39,10 +39,10 @@ class Filter:
         """
         Apply the filter expression to input data.
 
-        Inputs:
+        Args:
             input (dict): Data to evaluate against the filter expression.
 
-        Outputs:
+        Returns:
             dict: Input data if the filter passes, otherwise an empty dictionary.
         """
         tokens = Filter.tokenize(self.expression)
@@ -56,10 +56,10 @@ class Filter:
         """
         Convert a filter expression into tokens.
 
-        Inputs:
+        Args:
             expression (str): Filter expression to tokenize.
 
-        Outputs:
+        Returns:
             list: Tokens extracted from the expression.
         """
         return re.findall(
@@ -72,12 +72,12 @@ class Filter:
         """
         Parse OR expressions from filter tokens.
 
-        Inputs:
+        Args:
             tokens (list): Tokenized filter expression.
             index (int): Current token index.
             data (dict): Data values used for evaluation.
 
-        Outputs:
+        Returns:
             tuple: Evaluation result and updated token index.
         """
         result, index = Filter.parse_and(tokens, index, data)
@@ -94,12 +94,12 @@ class Filter:
         """
         Parse AND expressions from filter tokens.
 
-        Inputs:
+        Args:
             tokens (list): Tokenized filter expression.
             index (int): Current token index.
             data (dict): Data values used for evaluation.
 
-        Outputs:
+        Returns:
             tuple: Evaluation result and updated token index.
         """
         result, index = Filter.parse_not(tokens, index, data)
@@ -117,12 +117,12 @@ class Filter:
         """
         Parse NOT expressions from filter tokens.
 
-        Inputs:
+        Args:
             tokens (list): Tokenized filter expression.
             index (int): Current token index.
             data (dict): Data values used for evaluation.
 
-        Outputs:
+        Returns:
             tuple: Evaluation result and updated token index.
         """
         if index < len(tokens) and tokens[index] == "not":
@@ -136,12 +136,12 @@ class Filter:
         """
         Parse grouped expressions or comparisons.
 
-        Inputs:
+        Args:
             tokens (list): Tokenized filter expression.
             index (int): Current token index.
             data (dict): Data values used for evaluation.
 
-        Outputs:
+        Returns:
             tuple: Evaluation result and updated token index.
         """
         if index < len(tokens) and tokens[index] == "(":
@@ -159,12 +159,12 @@ class Filter:
         """
         Compare a data value against a filter condition.
 
-        Inputs:
+        Args:
             tokens (list): Tokenized filter expression.
             index (int): Current token index.
             data (dict): Data values used for comparison.
 
-        Outputs:
+        Returns:
             tuple: Comparison result and updated token index.
         """
         if index + 2 >= len(tokens):
@@ -211,11 +211,11 @@ class Filter:
         """
         Resolve a token into its corresponding value.
 
-        Inputs:
+        Args:
             token (str): Token to resolve.
             data (dict): Data values used for variable lookup.
 
-        Outputs:
+        Returns:
             object: Resolved literal or data value.
         """
         value = Filter.literal(token)
@@ -237,10 +237,10 @@ class Filter:
         """
         Convert a token into a literal value.
 
-        Inputs:
+        Args:
             token (str): Token to convert.
 
-        Outputs:
+        Returns:
             object: Parsed literal value, or None if not a literal.
         """
         if token.startswith(("'", '"')):
@@ -269,10 +269,10 @@ class Filter:
         """
         Validate a filter expression.
 
-        Inputs:
+        Args:
             expression (str): Filter expression to validate.
 
-        Outputs:
+        Returns:
             bool: Whether the expression is valid.
         """
         tokens = Filter.tokenize(expression)

@@ -12,7 +12,7 @@ class Module:
         """
         Initialize a module from a configuration file.
 
-        Inputs:
+        Args:
             config_file (str): Path to the module YAML configuration file.
         """
         self.id = str(uuid.uuid4())
@@ -41,7 +41,7 @@ class Module:
         """
         Convert module attributes into a dictionary.
 
-        Outputs:
+        Returns:
             dict: Module attributes excluding private fields.
         """
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
@@ -50,10 +50,10 @@ class Module:
         """
         Load a Python module from a source file.
 
-        Inputs:
+        Args:
             path (str): Path to the Python source file.
 
-        Outputs:
+        Returns:
             object: Loaded Python module.
         """
         name = os.path.splitext(os.path.basename(path))[0]
@@ -69,7 +69,7 @@ class Module:
         """
         Update module input values.
 
-        Inputs:
+        Args:
             data (dict): New input values keyed by input name.
         """
         for k in self.inputs.keys():
@@ -79,7 +79,7 @@ class Module:
         """
         Create a copy of the module.
 
-        Outputs:
+        Returns:
             Module: New module instance with copied configuration data.
         """
         new = type(self).__new__(type(self))
@@ -106,7 +106,7 @@ class Module:
         """
         Execute the module with its configured inputs.
 
-        Outputs:
+        Returns:
             dict: Module output values matching configured outputs.
         """
         result = self._module.run(self.inputs)

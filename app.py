@@ -10,10 +10,10 @@ def load_module_configs() -> list[Module]:
     """
     Load all module configurations from YAML files.
 
-    Inputs:
+    Args:
         None.
 
-    Outputs:
+    Returns:
         list[Module]: List of initialized modules loaded from configuration files.
     """
     modules: list[Module] = []
@@ -29,11 +29,11 @@ def get_src_by_id(id: str, type: str) -> object:
     """
     Retrieve an object from a source collection by ID.
 
-    Inputs:
+    Args:
         id (str): Unique identifier of the object to retrieve.
         type (str): Source collection type. Supported values are TARGET, FILTER, and MODULE.
 
-    Outputs:
+    Returns:
         object: Object matching the provided ID.
 
     Raises:

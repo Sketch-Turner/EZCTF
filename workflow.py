@@ -15,13 +15,13 @@ class Workflow:
         """
         Add a node to the workflow.
 
-        Inputs:
+        Args:
             type (str): Type of node to create. Supported values are TARGET, FILTER, and MODULE.
             source (object): Source object used to initialize the node.
             x (int): X-coordinate position of the node.
             y (int): Y-coordinate position of the node.
 
-        Outputs:
+        Returns:
             Node: Newly created workflow node.
 
         Raises:
@@ -49,7 +49,7 @@ class Workflow:
         """
         Remove a node and its connected edges from the workflow.
 
-        Inputs:
+        Args:
             node_id (str): ID of the node to remove.
         """
         self.nodes = [
@@ -73,10 +73,10 @@ class Workflow:
         """
         Retrieve a node by its ID.
 
-        Inputs:
+        Args:
             node_id (str): ID of the node to retrieve.
 
-        Outputs:
+        Returns:
             Node: Node with the matching ID.
 
         Raises:
@@ -92,11 +92,11 @@ class Workflow:
         """
         Add an edge between two workflow nodes.
 
-        Inputs:
+        Args:
             source_id (str): ID of the source node.
             destination_id (str): ID of the destination node.
 
-        Outputs:
+        Returns:
             Edge: Newly created edge connecting the nodes.
         """
         source = self.get_node(source_id)
@@ -117,7 +117,7 @@ class Workflow:
         """
         Remove an edge from the workflow.
 
-        Inputs:
+        Args:
             edge_id (str): ID of the edge to remove.
         """
         edge = next(
@@ -134,7 +134,7 @@ class Workflow:
         """
         Get all workflow nodes as dictionaries.
 
-        Outputs:
+        Returns:
             list[dict]: List of serialized workflow nodes.
         """
         return [
@@ -146,7 +146,7 @@ class Workflow:
         """
         Get all workflow edges as dictionaries.
 
-        Outputs:
+        Returns:
             list[dict]: List of serialized workflow edges.
         """
         return [
@@ -158,7 +158,7 @@ class Workflow:
         """
         Convert the workflow to a dictionary.
 
-        Outputs:
+        Returns:
             dict: Serialized workflow containing nodes and edges.
         """
         return {
@@ -170,11 +170,11 @@ class Workflow:
         """
         Find the workflow target node ID for an IP address.
 
-        Inputs:
+        Args:
             ip (str): Target IP address.
             targets (list[Target]): List of target objects.
 
-        Outputs:
+        Returns:
             str | None: Matching target node ID, or None if no match is found.
         """
         for t in targets:
@@ -189,10 +189,10 @@ class Workflow:
         """
         Execute the workflow starting from each target node.
 
-        Inputs:
+        Args:
             targets (list[Target]): List of target objects.
 
-        Outputs:
+        Returns:
             dict: Workflow execution results.
         """
         for t in self.targets:
@@ -211,7 +211,7 @@ class Workflow:
         """
         Recursively execute workflow nodes using depth-first traversal.
 
-        Inputs:
+        Args:
             node (Node): Current workflow node to execute.
             input (dict): Input data passed into the node.
         """

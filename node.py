@@ -12,7 +12,7 @@ class Node:
         """
         Initialize a workflow node.
 
-        Inputs:
+        Args:
             type (str): Node type identifier.
             data (dict): Node-specific data.
             x (int): X-coordinate position on the canvas.
@@ -30,7 +30,7 @@ class Node:
         """
         Convert node attributes into a dictionary.
 
-        Outputs:
+        Returns:
             dict: Node attributes and rendered HTML excluding private fields.
         """
         data = {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
@@ -41,7 +41,7 @@ class Node:
         """
         Get nodes connected by outgoing edges.
 
-        Outputs:
+        Returns:
             list: Destination nodes connected to this node.
         """
         next = []
@@ -69,7 +69,7 @@ class TargetNode(Node):
         """
         Initialize a target workflow node.
 
-        Inputs:
+        Args:
             target (Target): Target object represented by this node.
             x (int): X-coordinate position on the canvas.
             y (int): Y-coordinate position on the canvas.
@@ -85,7 +85,7 @@ class TargetNode(Node):
         """
         Render the target node HTML.
 
-        Outputs:
+        Returns:
             str: HTML representation of the node.
         """
         return f"""
@@ -97,7 +97,7 @@ class TargetNode(Node):
         """
         Get target IP addresses.
 
-        Outputs:
+        Returns:
             list: List of target IP addresses.
         """
         ip_list = self.data.get("tgt_ip", [])
@@ -113,7 +113,7 @@ class FilterNode(Node):
         """
         Initialize a filter workflow node.
 
-        Inputs:
+        Args:
             filter (Filter): Filter object represented by this node.
             x (int): X-coordinate position on the canvas.
             y (int): Y-coordinate position on the canvas.
@@ -130,7 +130,7 @@ class FilterNode(Node):
         """
         Render the filter node HTML.
 
-        Outputs:
+        Returns:
             str: HTML representation of the node.
         """
         return f"""
@@ -142,7 +142,7 @@ class FilterNode(Node):
         """
         Render the filter configuration HTML.
 
-        Outputs:
+        Returns:
             str: HTML representation of the filter configuration.
         """
         return f"""
@@ -161,7 +161,7 @@ class FilterNode(Node):
         """
         Update filter configuration values.
 
-        Inputs:
+        Args:
             data (dict): Updated filter configuration data.
         """
         self.data["expression"] = data["expression"]
@@ -173,10 +173,10 @@ class FilterNode(Node):
         """
         Apply the filter to input data.
 
-        Inputs:
+        Args:
             input (dict): Data to evaluate against the filter.
 
-        Outputs:
+        Returns:
             dict: Filtered input data if filter is valid and data matches, otherwise an empty dictionary.
         """
         if History.verbose:
@@ -201,7 +201,7 @@ class ModuleNode(Node):
         """
         Initialize a module workflow node.
 
-        Inputs:
+        Args:
             module (Module): Module object represented by this node.
             x (int): X-coordinate position on the canvas.
             y (int): Y-coordinate position on the canvas.
@@ -218,7 +218,7 @@ class ModuleNode(Node):
         """
         Render the module node HTML.
 
-        Outputs:
+        Returns:
             str: HTML representation of the node.
         """
         inputs = "".join(
@@ -238,7 +238,7 @@ class ModuleNode(Node):
         """
         Render the module configuration HTML.
 
-        Outputs:
+        Returns:
             str: HTML representation of the module configuration.
         """
         fields = "".join(
@@ -264,7 +264,7 @@ class ModuleNode(Node):
         """
         Update module configuration values.
 
-        Inputs:
+        Args:
             data (dict): Updated module input values.
         """
         self._module.update_inputs(data)
@@ -274,10 +274,10 @@ class ModuleNode(Node):
         """
         Execute the module using input data.
 
-        Inputs:
+        Args:
             input (dict): Data used to update module inputs.
 
-        Outputs:
+        Returns:
             dict: Module execution results.
         """
         input['source_id'] = self.id
@@ -298,7 +298,7 @@ class Edge:
         """
         Initialize a workflow edge.
 
-        Inputs:
+        Args:
             source (Node): Source node of the connection.
             destination (Node): Destination node of the connection.
         """
@@ -310,7 +310,7 @@ class Edge:
         """
         Convert edge data into a dictionary.
 
-        Outputs:
+        Returns:
             dict: Edge identifier and connected node identifiers.
         """
         return {

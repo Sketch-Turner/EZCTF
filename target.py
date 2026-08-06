@@ -9,7 +9,7 @@ class Target:
         """
         Initialize a target.
 
-        Inputs:
+        Args:
             ip (str): Target IP address.
         """
         self.id = str(uuid.uuid4())
@@ -20,7 +20,7 @@ class Target:
         """
         Convert target attributes into a dictionary.
 
-        Outputs:
+        Returns:
             dict: Target attributes excluding private fields.
         """
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}

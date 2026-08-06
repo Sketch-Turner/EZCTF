@@ -25,7 +25,7 @@ class History:
             """
             Initialize a history log entry.
 
-            Inputs:
+            Args:
                 root_id (str): Target associated with the log entry.
                 source_id (str): Source associated with the log entry.
                 message (str): Log message.
@@ -40,7 +40,7 @@ class History:
         """
         Write a log entry to the history queue.
 
-        Inputs:
+        Args:
             root_id (str): Target associated with the log entry.
             source_id (str): Source associated with the log entry.
             message (str): Log message.
@@ -53,7 +53,7 @@ class History:
         """
         Read the next log entry from the history queue.
 
-        Outputs:
+        Returns:
             History.Log | None: Next log entry, or None if the queue is empty.
         """
         try:
