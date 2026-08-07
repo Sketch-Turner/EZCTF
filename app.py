@@ -5,6 +5,7 @@ from module import Module
 from filter import Filter
 from node import TargetNode
 import os
+import threading
 
 def load_module_configs() -> list[Module]:
     """
@@ -98,6 +99,10 @@ def remove_target(target_id):
 
     return jsonify({"success": True})
 
+@app.route("/targets/history/<target_id>")
+def get_target_history(target_id):
+    return jsonify({"history":workflow.get_target_history(target_id, targets)})
+
 @app.route("/workflow/nodes", methods=["POST"])
 def add_workflow_node():
     data = request.json
@@ -182,8 +187,12 @@ def update_node_config(node_id):
 
 @app.route("/workflow/run")
 def run_workflow():
-    return workflow.run(targets)
+    workflow.run(targets)
 
+    return jsonify({
+            "success": True
+        })
 
 if __name__ == "__main__":
+    threading.Thread(target=workflow.sync_history, args=(targets,), daemon=True).start()
     app.run(host="127.0.0.1", port=5000, debug=True)

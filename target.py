@@ -1,4 +1,5 @@
 import uuid
+from queue import Queue
 
 class Target:
     """
@@ -15,6 +16,7 @@ class Target:
         self.id = str(uuid.uuid4())
         self.tgt_ip = ip
         self.name = ip
+        self._history = Queue()
 
     def to_dict(self) -> dict:
         """

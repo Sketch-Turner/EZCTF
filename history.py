@@ -1,6 +1,5 @@
-from queue import Queue, Empty
+from queue import Queue
 from time import time
-
 
 class History:
     """
@@ -49,14 +48,11 @@ class History:
         History._queue.put(History.Log(root_id, source_id, message))
 
     @staticmethod
-    def read() -> "History.Log | None":
+    def read() -> "History.Log":
         """
         Read the next log entry from the history queue.
 
         Returns:
-            History.Log | None: Next log entry, or None if the queue is empty.
+            History.Log: Next log entry.
         """
-        try:
-            return History._queue.get_nowait()
-        except Empty:
-            return None
+        return History._queue.get()

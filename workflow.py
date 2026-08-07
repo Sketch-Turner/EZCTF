@@ -1,6 +1,7 @@
 from node import *
 from target import Target
 from history import History
+from queue import Empty
 
 class Workflow:
     def __init__(self):
@@ -10,6 +11,7 @@ class Workflow:
         self.nodes = []
         self.edges = []
         self.targets = [] # target nodes
+        self.history = [] # global history logs
 
     def add_node(self, type: str, source: object, x: int = 0, y: int = 0) -> Node:
         """
@@ -185,15 +187,12 @@ class Workflow:
 
         return None
 
-    def run(self, targets:list[Target]) -> dict:
+    def run(self, targets:list[Target]):
         """
         Execute the workflow starting from each target node.
 
         Args:
             targets (list[Target]): List of target objects.
-
-        Returns:
-            dict: Workflow execution results.
         """
         for t in self.targets:
             ip_list = t.get_ips()
@@ -204,8 +203,6 @@ class Workflow:
                 for node in t.get_next():
                     self.dfs(node, {'tgt_ip':ip, 'root_id':root_id})
                 History.write(root_id=root_id, source_id=root_id, message="Workflow complete")
-
-        return {}
 
     def dfs(self, node: Node, input: dict):
         """
@@ -238,3 +235,43 @@ class Workflow:
             if isinstance(node.data["tgt_ip"], list):
                 node.data["tgt_ip"] = target_pool
                 node.data["name"] = target_pool
+
+    def sync_history(self, targets:list[Target]):
+        """
+        Syncs target history.
+        """
+        while True:
+            log = History.read()
+            self.history.append(log)
+            target = None
+            for t in targets:
+                if t.id == log.root_id:
+                    target = t
+                    break
+            if target:
+                target._history.put(log)
+
+    def get_target_history(self, target_id: str, targets:list[Target]) -> list:
+        """
+        Retrieve and remove all pending history entries for a Target.
+
+        Args:
+            node_id: ID of the Target whose history should be retrieved.
+
+        Returns:
+            List of history log entries for the Target.
+        """
+        logs = []
+        target = None
+        for t in targets:
+            if t.id == target_id:
+                target = t
+                break
+        if target:
+            while True:
+                try:
+                    logs.append(target._history.get_nowait().__dict__)
+                except Empty:
+                    break
+
+        return logs

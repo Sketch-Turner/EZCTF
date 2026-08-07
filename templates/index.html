@@ -227,6 +227,7 @@
         element.classList.add("active");
 
         document.getElementById("target-title").textContent = element.dataset.tgt_ip;
+        refreshHistory()
     }
 
     /**
@@ -434,9 +435,9 @@
             method: "GET"
         });
 
-        const result = await response.json();
+        await response.json();
 
-        console.log(result);
+        refreshHistory();
     });
 
     // Store workflow item data when dragging begins.
@@ -1053,6 +1054,68 @@
             .innerHTML = "";
     }
 
+
+    /**
+     * Fetch and display history for the currently selected target.
+     *
+     * Each workflow is displayed as its own group. New workflow groups are
+     * prepended to the history panel.
+     */
+    async function refreshHistory() {
+        const selected = document.querySelector(".target.active");
+
+        if (!selected)
+            return;
+
+        const targetId = selected.dataset.id;
+
+        const response = await fetch(`/targets/history/${targetId}`);
+
+        if (!response.ok)
+            return;
+
+        const data = await response.json();
+
+        const historyLog = document.getElementById("history-log");
+
+        let currentWorkflow = historyLog.firstElementChild;
+
+        for (const entry of data.history) {
+            // New workflow
+            if (
+                entry.message === "Workflow started" &&
+                entry.source_id === entry.root_id
+            ) {
+                currentWorkflow = document.createElement("div");
+                currentWorkflow.className = "history-workflow";
+
+                historyLog.append(currentWorkflow);
+            }
+
+            // If no workflow exists yet (e.g. page first loads)
+            if (!currentWorkflow) {
+                currentWorkflow = document.createElement("div");
+                currentWorkflow.className = "history-workflow";
+
+                historyLog.append(currentWorkflow);
+            }
+
+            const log = document.createElement("div");
+            log.className = "history-entry";
+
+            const time = new Date(entry.timestamp * 1000)
+                .toLocaleTimeString();
+
+            log.innerHTML = `
+                <span class="history-time">${time}</span>
+                <span class="history-message">${entry.message}</span>
+            `;
+
+            currentWorkflow.appendChild(log);
+        }
+
+        historyLog.scrollTop = historyLog.scrollHeight;
+    }
 </script>
 
 </body>
