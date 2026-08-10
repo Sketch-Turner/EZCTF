@@ -14,7 +14,7 @@ class Target:
             ip (str): Target IP address.
         """
         self.id = str(uuid.uuid4())
-        self.tgt_ip = ip
+        self.target = ip
         self.name = ip
         self._history = Queue()
 

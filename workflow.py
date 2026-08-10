@@ -180,7 +180,7 @@ class Workflow:
             str | None: Matching target node ID, or None if no match is found.
         """
         for t in targets:
-            tgt = t.tgt_ip
+            tgt = t.target
             if isinstance(tgt, str):
                 if ip == tgt:
                     return t.id
@@ -201,7 +201,7 @@ class Workflow:
                 root_id = self.get_root_id(ip, targets)
                 History.write(root_id=root_id, source_id=root_id, message="Workflow started")
                 for node in t.get_next():
-                    self.dfs(node, {'tgt_ip':ip, 'root_id':root_id})
+                    self.dfs(node, {'target':ip, 'root_id':root_id})
                 History.write(root_id=root_id, source_id=root_id, message="Workflow complete")
 
     def dfs(self, node: Node, input: dict):
@@ -232,8 +232,8 @@ class Workflow:
             target_pool (list): List of all targets.
         """
         for node in self.targets:
-            if isinstance(node.data["tgt_ip"], list):
-                node.data["tgt_ip"] = target_pool
+            if isinstance(node.data["target"], list):
+                node.data["target"] = target_pool
                 node.data["name"] = target_pool
 
     def sync_history(self, targets:list[Target]):

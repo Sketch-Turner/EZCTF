@@ -76,7 +76,7 @@ def index():
 def add_target():
     data = request.get_json()
 
-    ip = data.get("tgt_ip")
+    ip = data.get("target")
 
     if not ip:
         return jsonify({"error": "Missing IP"}), 400
@@ -94,7 +94,7 @@ def remove_target(target_id):
     global targets, target_pool
 
     targets = [t for t in targets if t.id != target_id]
-    target_pool = set([t.tgt_ip for t in targets])
+    target_pool = set([t.target for t in targets])
     workflow.update_targets(list(target_pool))
 
     return jsonify({"success": True})
@@ -102,6 +102,18 @@ def remove_target(target_id):
 @app.route("/targets/history/<target_id>")
 def get_target_history(target_id):
     return jsonify({"history":workflow.get_target_history(target_id, targets)})
+
+@app.route("/modules/<module_id>")
+def get_module(module_id):
+    module = next(
+        (m for m in modules if m.id == module_id),
+        None
+    )
+
+    if module is None:
+        return jsonify({"error": "Module not found"}), 404
+
+    return jsonify(module.to_dict())
 
 @app.route("/workflow/nodes", methods=["POST"])
 def add_workflow_node():

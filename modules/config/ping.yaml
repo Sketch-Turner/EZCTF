@@ -2,17 +2,33 @@ name: Ping
 author: Sketch
 version: 1.0.0.0
 platform: Any
-description: Check target availability
+description: Ping target with ICMP Type 8 (Echo Request)
 src: modules/src/ping.py
 
 inputs:
-  tgt_ip: null
-  count: 1
-  interval: 1
-  timeout: 2
+  target:
+    value: 127.0.0.1
+    input: NODE
+    description: Target host
+  count:
+    value: 1
+    input: CONFIG
+    description: Number of pings
+  interval:
+    value: 1
+    input: CONFIG
+    description: Seconds to wait in between pings
+  timeout:
+    value: 2
+    input: CONFIG
+    description: Seconds to wait for response
 
 outputs:
-  - tgt_ip
-  - sent
-  - received
-  - avg_latency
+  target:
+    description: Target host
+  sent:
+    description: Number of pings sent
+  received:
+    description: Number of replies
+  avg_latency:
+    description: Average latency in seconds

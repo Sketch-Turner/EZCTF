@@ -90,7 +90,7 @@ class TargetNode(Node):
         """
         return f"""
             <div class="node-title">Target</div>
-            <div class="node-value">{self.data["tgt_ip"]}</div>
+            <div class="node-value">{self.data["target"]}</div>
         """
 
     def get_ips(self) -> list:
@@ -100,7 +100,7 @@ class TargetNode(Node):
         Returns:
             list: List of target IP addresses.
         """
-        ip_list = self.data.get("tgt_ip", [])
+        ip_list = self.data.get("target", [])
         if not isinstance(ip_list, list):
             ip_list = [ip_list]
         return ip_list
@@ -222,8 +222,9 @@ class ModuleNode(Node):
             str: HTML representation of the node.
         """
         inputs = "".join(
-            f'<div class="node-input"><span>{k}: </span><span>{v}</span></div>'
-            for k, v in self.data["inputs"].items() if k in self.data["config"]
+            f'<div class="node-input"><span>{input.name}: </span><span>{input.value}</span></div>'
+            for input in self._module._inputs
+            if "CONFIG" in input.input_type
         )
 
         return f"""
@@ -244,18 +245,19 @@ class ModuleNode(Node):
         fields = "".join(
             f"""
             <div class="config-group">
-                <label for="{key}">{key}</label>
+                <label for="{input['name']}">{input['name']}</label>
 
                 <input
-                    id="{key}"
-                    name="{key}"
+                    id="{input['name']}"
+                    name="{input['name']}"
                     type="text"
                     class="config-input"
-                    value="{self.data["inputs"].get(key, "")}"
+                    value="{input['value']}"
                 >
             </div>
             """
-            for key in self.data["config"]
+            for input in self.data["inputs"]
+            if "CONFIG" in input["input_type"]
         )
 
         return fields
@@ -283,8 +285,8 @@ class ModuleNode(Node):
         input['source_id'] = self.id
         self._module.update_inputs(input)
         if History.verbose:
-            History.write(root_id=input['root_id'], source_id=self.id, message=f"Starting module: {self._module.name}\n    Input: {self._module.inputs}")
-        result = self._module.run()
+            History.write(root_id=input['root_id'], source_id=self.id, message=f"Starting module: {self._module.name}\n    Input: { {input.name: input.value for input in self._module._inputs} }")
+        result = self._module.run(root_id=input['root_id'], source_id=self.id)
         result['root_id'] = input['root_id']
         if History.verbose:
             History.write(root_id=input['root_id'], source_id=self.id, message=f"Module complete\n    Output: {result}")

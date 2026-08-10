@@ -1,7 +1,7 @@
 from icmplib import ping
 
 def run(config):
-    target = config.get("tgt_ip", None)
+    target = config.get("target", None)
     count = int(config.get("count", 1))
     interval = float(config.get("interval", 1))
     timeout = float(config.get("timeout", 2))
@@ -15,7 +15,7 @@ def run(config):
     )
 
     return {
-        "tgt_ip": target,
+        "target": target,
         "sent": result.packets_sent,
         "received": result.packets_received,
         "avg_latency": result.avg_rtt / 1000

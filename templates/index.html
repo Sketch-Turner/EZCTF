@@ -32,7 +32,7 @@
                 <div class="target {% if loop.first %}active{% endif %}"
                     onclick="selectTarget(this)"
                     data-id="{{ target.id }}"
-                    data-tgt_ip="{{ target.tgt_ip }}">
+                    data-target="{{ target.target }}">
                     {{ target.name }}
                 </div>
                 {% endfor %}
@@ -42,7 +42,7 @@
         <div class="details">
             <h2 id="target-title">
                 {% if targets %}
-                    {{ targets[0].tgt_ip }}
+                    {{ targets[0].target }}
                 {% endif %}
             </h2>
 
@@ -72,8 +72,7 @@
                 {% for module in modules %}
                 <div class="module {% if loop.first %}active{% endif %}"
                     onclick="selectModule(this)"
-                    data-id="{{ module.id }}"
-                    data-module='{{ module.to_dict() | tojson }}'>
+                    data-id="{{ module.id }}">
                     {{ module.name }}
                 </div>
                 {% endfor %}
@@ -141,7 +140,7 @@
                     draggable="true"
                     data-id="{{ target.id }}"
                     data-type="TARGET">
-                    {{ target.tgt_ip }}
+                    {{ target.target }}
                 </div>
                 {% endfor %}
             </div>
@@ -226,7 +225,7 @@
 
         element.classList.add("active");
 
-        document.getElementById("target-title").textContent = element.dataset.tgt_ip;
+        document.getElementById("target-title").textContent = element.dataset.target;
         refreshHistory()
     }
 
@@ -251,7 +250,7 @@
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ "tgt_ip": ip })
+            body: JSON.stringify({ "target": ip })
         });
 
         if (!response.ok)
@@ -262,8 +261,8 @@
         const target = document.createElement("div");
         target.className = "target";
         target.dataset.id = targetData.id;
-        target.dataset.tgt_ip = targetData.tgt_ip;
-        target.textContent = targetData.tgt_ip;
+        target.dataset.target = targetData.target;
+        target.textContent = targetData.target;
 
         target.onclick = function () {
             selectTarget(this);
@@ -281,7 +280,7 @@
         workflowTarget.draggable = true;
         workflowTarget.dataset.id = targetData.id;
         workflowTarget.dataset.type = "TARGET";
-        workflowTarget.textContent = targetData.tgt_ip;
+        workflowTarget.textContent = targetData.target;
 
         const workflowList = document.getElementById("workflow-target-list");
         workflowList.appendChild(workflowTarget);
@@ -367,13 +366,20 @@
      *
      * @param {HTMLElement} element - Module element to mark as active.
      */
-    function selectModule(element) {
+    async function selectModule(element) {
         document.querySelectorAll(".module")
             .forEach(m => m.classList.remove("active"));
 
         element.classList.add("active");
 
-        const module = JSON.parse(element.dataset.module);
+        const id = element.dataset.id;
+
+        const response = await fetch(`/modules/${id}`);
+
+        if (!response.ok)
+            return;
+
+        const module = await response.json();
 
         document.getElementById("module-name").textContent = module.name;
         document.getElementById("module-author").textContent = module.author;
@@ -381,28 +387,51 @@
         document.getElementById("module-platform").textContent = module.platform;
         document.getElementById("module-description").textContent = module.description;
 
-
         const inputs = document.getElementById("module-inputs");
-        inputs.innerHTML = "";
 
-        for (const [key, value] of Object.entries(module.inputs || {})) {
-            inputs.innerHTML += `
-                <div class="io-item">
-                    <span>${key}</span>
-                    <span>${value}</span>
-                </div>
-            `;
-        }
-
+        inputs.innerHTML = `
+            <table class="io-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${(module.inputs || []).map(input => `
+                        <tr>
+                            <td>${input.name}</td>
+                            <td>${input.description}</td>
+                            <td>${input.value}</td>
+                            <td>${input.input_type}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
 
         const outputs = document.getElementById("module-outputs");
-        outputs.innerHTML = "";
 
-        for (const output of module.outputs || []) {
-            outputs.innerHTML += `
-                <span class="output-tag">${output}</span>
-            `;
-        }
+        outputs.innerHTML = `
+            <table class="io-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${(module.outputs || []).map(output => `
+                        <tr>
+                            <td>${output.name}</td>
+                            <td>${output.description}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
     }
 
     /**
