@@ -29,6 +29,9 @@ class ModuleInput:
         self.input_type = input_type
         self.description = description
 
+        if "FILE" in input_type:
+            self._file = None
+
 class ModuleOutput:
     """
     Represents an output produced by a module.
@@ -104,7 +107,7 @@ class Module:
         """
         data = {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
-        data["inputs"] = [dict(input.__dict__) for input in self._inputs]
+        data["inputs"] = [{k: v for k, v in input.__dict__.items() if not k.startswith("_")} for input in self._inputs]
 
         data["outputs"] = [dict(output.__dict__) for output in self._outputs]
 
@@ -137,7 +140,13 @@ class Module:
             data (dict): New input values keyed by input name.
         """
         for input in self._inputs:
-            input.value = data.get(input.name, input.value)
+            if "FILE" in input.input_type:
+                file = data.get(input.name)
+                if file:
+                    input.value = file.filename
+                    input._file = file.read()
+            else:
+                input.value = data.get(input.name, input.value)
 
     def copy(self) -> "Module":
         """
@@ -187,7 +196,10 @@ class Module:
         Returns:
             dict: Module output values matching configured outputs.
         """
-        config = {input.name: input.value for input in self._inputs}
+        config = {
+            input.name: input._file if "FILE" in input.input_type else input.value
+            for input in self._inputs
+        }
         config["source_id"] = source_id
         config["root_id"] = root_id
 

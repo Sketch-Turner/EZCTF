@@ -236,23 +236,41 @@ class ModuleNode(Node):
         Returns:
             str: HTML representation of the module configuration.
         """
-        fields = "".join(
-            f"""
-            <div class="config-group">
-                <label for="{input.name}">{input.name}</label>
+        fields = ""
 
-                <input
-                    id="{input.name}"
-                    name="{input.name}"
-                    type="text"
-                    class="config-input"
-                    value="{input.value}"
-                >
-            </div>
-            """
-            for input in self._module._inputs
-            if "CONFIG" in input.input_type
-        )
+        for input in self._module._inputs:
+            if "CONFIG" not in input.input_type:
+                continue
+
+            if "FILE" in input.input_type:
+                field = f"""
+                <div class="config-group">
+                    <label for="{input.name}">{input.name}</label>
+
+                    <input
+                        id="{input.name}"
+                        name="{input.name}"
+                        type="file"
+                        class="config-input"
+                    >
+                </div>
+                """
+            else:
+                field = f"""
+                <div class="config-group">
+                    <label for="{input.name}">{input.name}</label>
+
+                    <input
+                        id="{input.name}"
+                        name="{input.name}"
+                        type="text"
+                        class="config-input"
+                        value="{input.value}"
+                    >
+                </div>
+                """
+
+            fields += field
 
         return fields
 

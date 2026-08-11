@@ -1012,14 +1012,20 @@
      * @returns {Promise<void>}
      */
     async function saveNodeConfig(nodeId) {
-        const data = {};
+        const formData = new FormData();
 
         document
             .getElementById("node-config-body")
             .querySelectorAll("input, textarea, select")
             .forEach(field => {
-                if (field.name) {
-                    data[field.name] = field.value;
+                if (!field.name)
+                    return;
+
+                if (field.type === "file") {
+                    if (field.files.length)
+                        formData.append(field.name, field.files[0]);
+                } else {
+                    formData.append(field.name, field.value);
                 }
             });
 
@@ -1027,12 +1033,12 @@
             `/workflow/nodes/${nodeId}/config`,
             {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
+                body: formData
             }
         );
+
+        if (!response.ok)
+            return;
 
         const node = await response.json();
 

@@ -190,7 +190,12 @@ def update_node_config(node_id):
     node = workflow.get_node(node_id)
 
     if not isinstance(node, TargetNode):
-        node.update_config(request.json)
+        data = request.form.to_dict()
+
+        for name, file in request.files.items():
+            data[name] = file
+
+        node.update_config(data)
 
     return jsonify({
         **node.to_dict(),
@@ -204,6 +209,17 @@ def run_workflow():
     return jsonify({
             "success": True
         })
+
+
+import logging
+class IgnoreHistory(logging.Filter):
+    def filter(self, record):
+        return "/targets/history/" not in record.getMessage()
+
+
+logging.getLogger("werkzeug").addFilter(IgnoreHistory())
+
+
 
 if __name__ == "__main__":
     threading.Thread(target=workflow.sync_history, args=(targets,), daemon=True).start()
