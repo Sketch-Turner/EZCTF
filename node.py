@@ -180,7 +180,7 @@ class FilterNode(Node):
             dict: Filtered input data if filter is valid and data matches, otherwise an empty dictionary.
         """
         if History.verbose:
-            History.write(root_id=input['root_id'], source_id=self.id, message=f"==Filter==\n    Input: {input}\n    Expression: {self._filter.expression}")
+            History.write(root_id=input['root_id'], source_id=self.id, message=f"Filter\n    Input: {input}\n    Expression: {self._filter.expression}")
         if self._filter.valid:
             output = self._filter.apply(input)
             if History.verbose:

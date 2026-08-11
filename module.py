@@ -157,8 +157,23 @@ class Module:
         new.platform = self.platform
         new.description = self.description
 
-        new._inputs = self._inputs.copy()
-        new._outputs = self._outputs.copy()
+        new._inputs = [
+            ModuleInput(
+                input.name,
+                input.value,
+                input.input_type,
+                input.description
+            )
+            for input in self._inputs
+        ]
+
+        new._outputs = [
+            ModuleOutput(
+                output.name,
+                output.description
+            )
+            for output in self._outputs
+        ]
 
         new.src = self.src
         new._module = self._module
