@@ -1087,6 +1087,9 @@
     }
 
 
+    const targetHistories = {};
+    const currentWorkflows = {};
+
     /**
      * Fetch and display history for the currently selected target.
      *
@@ -1100,6 +1103,25 @@
             return;
 
         const targetId = selected.dataset.id;
+        const historyLog = document.getElementById("history-log");
+
+        // Create history container for this target if necessary
+        if (!targetHistories[targetId]) {
+            const history = document.createElement("div");
+            history.className = "target-history";
+            targetHistories[targetId] = history;
+
+            historyLog.appendChild(history);
+            currentWorkflows[targetId] = null;
+        }
+
+        // Hide other target histories
+        for (const id in targetHistories) {
+            targetHistories[id].style.display =
+                id === targetId ? "" : "none";
+        }
+
+        const history = targetHistories[targetId];
 
         const response = await fetch(`/targets/history/${targetId}`);
 
@@ -1108,12 +1130,9 @@
 
         const data = await response.json();
 
-        const historyLog = document.getElementById("history-log");
-
-        let currentWorkflow = historyLog.firstElementChild;
+        let currentWorkflow = currentWorkflows[targetId];
 
         for (const entry of data.history) {
-            // New workflow
             if (
                 entry.message === "Workflow started" &&
                 entry.source_id === entry.root_id
@@ -1121,21 +1140,21 @@
                 currentWorkflow = document.createElement("div");
                 currentWorkflow.className = "history-workflow";
 
-                historyLog.append(currentWorkflow);
+                history.appendChild(currentWorkflow);
             }
 
-            // If no workflow exists yet (e.g. page first loads)
             if (!currentWorkflow) {
                 currentWorkflow = document.createElement("div");
                 currentWorkflow.className = "history-workflow";
 
-                historyLog.append(currentWorkflow);
+                history.appendChild(currentWorkflow);
             }
 
             const log = document.createElement("div");
             log.className = "history-entry";
 
-            const time = new Date(entry.timestamp * 1000).toLocaleTimeString();
+            const time = new Date(entry.timestamp * 1000)
+                .toLocaleTimeString();
 
             log.innerHTML = `
                 <span class="history-time">${time}</span>
@@ -1145,11 +1164,12 @@
             currentWorkflow.appendChild(log);
         }
 
+        currentWorkflows[targetId] = currentWorkflow;
+
         historyLog.scrollTop = historyLog.scrollHeight;
     }
-
-    // Check hist every 500 ms
-    setInterval(refreshHistory, 500);
+    // Check hist every 250 ms
+    setInterval(refreshHistory, 250);
 
 
 </script>
