@@ -226,7 +226,6 @@
         element.classList.add("active");
 
         document.getElementById("target-title").textContent = element.dataset.target;
-        refreshHistory()
     }
 
     /**
@@ -465,8 +464,6 @@
         });
 
         await response.json();
-
-        refreshHistory();
     });
 
     // Store workflow item data when dragging begins.
@@ -1132,8 +1129,7 @@
             const log = document.createElement("div");
             log.className = "history-entry";
 
-            const time = new Date(entry.timestamp * 1000)
-                .toLocaleTimeString();
+            const time = new Date(entry.timestamp * 1000).toLocaleTimeString();
 
             log.innerHTML = `
                 <span class="history-time">${time}</span>
@@ -1145,6 +1141,11 @@
 
         historyLog.scrollTop = historyLog.scrollHeight;
     }
+
+    // Check hist every 500 ms
+    setInterval(refreshHistory, 500);
+
+
 </script>
 
 </body>
