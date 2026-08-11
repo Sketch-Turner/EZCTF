@@ -232,9 +232,9 @@ class Workflow:
             target_pool (list): List of all targets.
         """
         for node in self.targets:
-            if isinstance(node.data["target"], list):
-                node.data["target"] = target_pool
-                node.data["name"] = target_pool
+            if isinstance(node._target.target, list):
+                node._target.target = target_pool
+                node._target.name = target_pool
 
     def sync_history(self, targets:list[Target]):
         """

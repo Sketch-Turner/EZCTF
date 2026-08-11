@@ -8,13 +8,12 @@ class Node:
     """
     Represents a node in a workflow graph.
     """
-    def __init__(self, type: str, data: dict, x: int = 0, y: int = 0):
+    def __init__(self, type: str, x: int = 0, y: int = 0):
         """
         Initialize a workflow node.
 
         Args:
             type (str): Node type identifier.
-            data (dict): Node-specific data.
             x (int): X-coordinate position on the canvas.
             y (int): Y-coordinate position on the canvas.
         """
@@ -22,7 +21,6 @@ class Node:
         self.type = type
         self.x = x
         self.y = y
-        self.data = data
         self._in = []
         self._out = []
 
@@ -76,10 +74,10 @@ class TargetNode(Node):
         """
         super().__init__(
             type="TARGET",
-            data=target.to_dict(),
             x=x,
             y=y
         )
+        self._target = target
 
     def render(self) -> str:
         """
@@ -90,7 +88,7 @@ class TargetNode(Node):
         """
         return f"""
             <div class="node-title">Target</div>
-            <div class="node-value">{self.data["target"]}</div>
+            <div class="node-value">{self._target.target}</div>
         """
 
     def get_ips(self) -> list:
@@ -100,7 +98,7 @@ class TargetNode(Node):
         Returns:
             list: List of target IP addresses.
         """
-        ip_list = self.data.get("target", [])
+        ip_list = self._target.target
         if not isinstance(ip_list, list):
             ip_list = [ip_list]
         return ip_list
@@ -120,7 +118,6 @@ class FilterNode(Node):
         """
         super().__init__(
             type="FILTER",
-            data=filter.to_dict(),
             x=x,
             y=y
         )
@@ -135,7 +132,7 @@ class FilterNode(Node):
         """
         return f"""
             <div class="node-title">Filter</div>
-            <div class="node-value">{self.data["expression"]}</div>
+            <div class="node-value">{self._filter.expression}</div>
         """
 
     def render_config(self) -> str:
@@ -153,7 +150,7 @@ class FilterNode(Node):
                 id="filter-expression"
                 name="expression"
                 class="config-textarea"
-            >{self.data["expression"]}</textarea>
+            >{self._filter.expression}</textarea>
         </div>
         """
 
@@ -164,10 +161,8 @@ class FilterNode(Node):
         Args:
             data (dict): Updated filter configuration data.
         """
-        self.data["expression"] = data["expression"]
-        self._filter.expression = self.data["expression"]
-        self.data["valid"] = Filter.validate(data["expression"])
-        self._filter.valid = self.data["valid"]
+        self._filter.expression = data["expression"]
+        self._filter.valid = data["valid"]
 
     def run(self, input: dict) -> dict:
         """
@@ -208,7 +203,6 @@ class ModuleNode(Node):
         """
         super().__init__(
             type="MODULE",
-            data=module.to_dict(),
             x=x,
             y=y
         )
@@ -229,7 +223,7 @@ class ModuleNode(Node):
 
         return f"""
             <div class="node-title">Module</div>
-            <div class="node-value">{self.data["name"]}</div>
+            <div class="node-value">{self._module.name}</div>
             <div class="node-inputs">
                 {inputs}
             </div>
@@ -245,19 +239,19 @@ class ModuleNode(Node):
         fields = "".join(
             f"""
             <div class="config-group">
-                <label for="{input['name']}">{input['name']}</label>
+                <label for="{input.name}">{input.name}</label>
 
                 <input
-                    id="{input['name']}"
-                    name="{input['name']}"
+                    id="{input.name}"
+                    name="{input.name}"
                     type="text"
                     class="config-input"
-                    value="{input['value']}"
+                    value="{input.value}"
                 >
             </div>
             """
-            for input in self.data["inputs"]
-            if "CONFIG" in input["input_type"]
+            for input in self._module._inputs
+            if "CONFIG" in input.input_type
         )
 
         return fields
@@ -270,7 +264,6 @@ class ModuleNode(Node):
             data (dict): Updated module input values.
         """
         self._module.update_inputs(data)
-        self.data = self._module.to_dict()
 
     def run(self, input: dict) -> dict:
         """
