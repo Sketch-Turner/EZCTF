@@ -7,7 +7,7 @@ src: modules/src/ping.py
 
 inputs:
   target:
-    value: 127.0.0.1
+    value: null
     input: NODE
     description: Target host
   count:
