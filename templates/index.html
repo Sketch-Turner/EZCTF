@@ -10,7 +10,7 @@
 <body>
 
 <div class="tabs">
-    <div class="tab active" onclick="showTab('targets', this)">Targets</div>
+    <div id="target-tab" class="tab active" onclick="showTab('targets', this)">Targets</div>
     <div class="tab" onclick="showTab('modules', this)">Modules</div>
     <div class="tab" onclick="showTab('workflow', this)">Workflow</div>
 </div>
@@ -1097,8 +1097,13 @@
      * prepended to the history panel.
      */
     async function refreshHistory() {
-        const selected = document.querySelector(".target.active");
+        //check that tab is open
+        const activeTab = document.querySelector(".tab.active");
+        if (activeTab.id != "target-tab")
+            return
 
+        //check for valid target
+        const selected = document.querySelector(".target.active");
         if (!selected)
             return;
 
