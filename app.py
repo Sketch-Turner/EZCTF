@@ -91,9 +91,9 @@ def add_target():
 
 @app.route("/targets/<target_id>", methods=["DELETE"])
 def remove_target(target_id):
-    global targets, target_pool
+    global target_pool
 
-    targets = [t for t in targets if t.id != target_id]
+    targets[:] = [t for t in targets if t.id != target_id]
     target_pool = set([t.target for t in targets])
     workflow.update_targets(list(target_pool))
 

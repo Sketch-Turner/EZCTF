@@ -51,6 +51,7 @@ class History:
     def read() -> "History.Log":
         """
         Read the next log entry from the history queue.
+        Blocks until log is available.
 
         Returns:
             History.Log: Next log entry.

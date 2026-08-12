@@ -238,6 +238,8 @@
      * @returns {Promise<void>}
      */
     async function addTarget() {
+        document.querySelector(".details").style.display = "";
+
         const input = document.getElementById("target-input");
         const ip = input.value.trim();
 
@@ -297,7 +299,6 @@
             .querySelectorAll('.workflow-node[data-type="TARGET"]')
             .forEach(async node => {
                 const id = node.dataset.id;
-                console.log("Updating: ", id);
 
                 const response = await fetch(`/workflow/nodes/${id}/config`, {
                     method: "PUT",
@@ -342,20 +343,30 @@
 
         selected.remove();
 
-        document.getElementById("target-title").textContent = "";
-
-        const firstTarget = document.querySelector(".target");
-
-        if (firstTarget) {
-            selectTarget(firstTarget);
-        }
-
         const workflowTarget = document.querySelector(
             `.workflow-item[data-type="TARGET"][data-id="${id}"]`
         );
 
         if (workflowTarget)
             workflowTarget.remove();
+
+        const history = targetHistories[id];
+
+        if (history)
+            history.remove();
+
+        delete targetHistories[id];
+        delete currentWorkflows[id];
+
+        const firstTarget = document.querySelector(".target");
+
+        if (firstTarget) {
+            selectTarget(firstTarget);
+        } else {
+            document.getElementById("target-title").innerHTML = "";
+            document.querySelector(".details").style.display = "none";
+            document.getElementById("history-log").innerHTML = "";
+        }
 
         refreshTargetNodes();
     }
@@ -1097,12 +1108,12 @@
      * prepended to the history panel.
      */
     async function refreshHistory() {
-        //check that tab is open
+        // check that tab is open
         const activeTab = document.querySelector(".tab.active");
         if (activeTab.id != "target-tab")
-            return
+            return;
 
-        //check for valid target
+        // check for valid target
         const selected = document.querySelector(".target.active");
         if (!selected)
             return;
@@ -1136,6 +1147,7 @@
         const data = await response.json();
 
         let currentWorkflow = currentWorkflows[targetId];
+        let scroll = true;
 
         for (const entry of data.history) {
             if (
@@ -1171,10 +1183,13 @@
 
         currentWorkflows[targetId] = currentWorkflow;
 
-        historyLog.scrollTop = historyLog.scrollHeight;
+        if (scroll) {
+            historyLog.scrollTop = historyLog.scrollHeight;
+            scroll = false;
+        }
     }
-    // Check hist every 250 ms
-    setInterval(refreshHistory, 250);
+    // Check hist every 100 ms
+    setInterval(refreshHistory, 100);
 
 
 </script>
