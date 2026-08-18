@@ -391,6 +391,8 @@
 
         const module = await response.json();
 
+        console.log(module);
+
         document.getElementById("module-name").textContent = module.name;
         document.getElementById("module-author").textContent = module.author;
         document.getElementById("module-version").textContent = module.version;
@@ -436,7 +438,20 @@
                     ${(module.outputs || []).map(output => `
                         <tr>
                             <td>${output.name}</td>
-                            <td>${output.description}</td>
+                            <td>
+                                ${output.description}
+
+                                ${output.properties ? `
+                                    <div class="io-properties">
+                                        ${Object.entries(output.properties).map(([name, property]) => `
+                                            <div class="io-property">
+                                                <span class="io-property-name">${name}</span>
+                                                <span>${property.description}</span>
+                                            </div>
+                                        `).join("")}
+                                    </div>
+                                ` : ""}
+                            </td>
                         </tr>
                     `).join("")}
                 </tbody>
@@ -1175,8 +1190,9 @@
 
             log.innerHTML = `
                 <span class="history-time">${time}</span>
-                <span class="history-message">${entry.message}</span>
+                <span class="history-message"></span>
             `;
+            log.querySelector(".history-message").textContent = entry.message;
 
             currentWorkflow.appendChild(log);
         }

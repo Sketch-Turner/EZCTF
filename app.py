@@ -6,6 +6,7 @@ from filter import Filter
 from node import TargetNode
 import os
 import threading
+from history import History
 
 def load_module_configs() -> list[Module]:
     """
@@ -222,5 +223,6 @@ logging.getLogger("werkzeug").addFilter(IgnoreHistory())
 
 
 if __name__ == "__main__":
+    History.verbose = False
     threading.Thread(target=workflow.sync_history, args=(targets,), daemon=True).start()
     app.run(host="127.0.0.1", port=5000, debug=True)

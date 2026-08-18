@@ -41,16 +41,18 @@ class ModuleOutput:
         description (str): Description of the output.
     """
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, properties: dict):
         """
         Initialize a module output.
 
         Args:
-            name: Name of the output.
-            description: Description of the output.
+            name (str): Name of the output.
+            description (str): Description of the output.
+            properties (dict): Subfield info.
         """
         self.name = name
         self.description = description
+        self.properties = properties
 
 class Module:
     """
@@ -90,7 +92,8 @@ class Module:
         self._outputs = [
             ModuleOutput(
                 name=name,
-                description=info.get("description")
+                description=info.get("description"),
+                properties=info.get("properties")
             )
             for name, info in data.get("outputs", {}).items()
         ]
@@ -179,7 +182,8 @@ class Module:
         new._outputs = [
             ModuleOutput(
                 output.name,
-                output.description
+                output.description,
+                output.properties
             )
             for output in self._outputs
         ]
