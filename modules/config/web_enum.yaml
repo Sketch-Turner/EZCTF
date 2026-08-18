@@ -1,0 +1,73 @@
+name: Web Enum
+author: Sketch
+version: 1.0.0.0
+platform: Any
+description: Enumerate web endpoints using a wordlist. Uses POST if data is set, otherwise GET.
+src: modules/src/web_enum.py
+
+inputs:
+  target:
+    value: null
+    input: NODE
+    description: Target host
+  wordlist:
+    value: null
+    input:
+      - CONFIG
+      - FILE
+    description: Newline-delimited wordlist
+  extensions:
+    value: ''
+    input: CONFIG
+    description: Comma-delimited list of extensions to try with each URL
+  cookies:
+    value: ''
+    input: CONFIG
+    description: Cookie data in JSON format
+  data:
+    value: ''
+    input: CONFIG
+    description: Body payload in JSON format
+  jitter_min:
+    value: 0
+    input: CONFIG
+    description: Minimum jitter time in seconds
+  jitter_max:
+    value: 0
+    input: CONFIG
+    description: Maximum jitter time in seconds
+  timeout:
+    value: 1
+    input: CONFIG
+    description: Time to wait for response in seconds
+  retry:
+    value: 0
+    input: CONFIG
+    description: Number of times to retry each URL if a network error occurs
+  threads:
+    value: 1
+    input: CONFIG
+    description: Number of threads to use
+
+outputs:
+  target:
+    description: Target host
+  results:
+    description: List of endpoint enumeration results in JSON format
+    properties:
+      url:
+        description: Requested URL
+      attempts:
+        description: Number of attempts
+      status: 
+        description: Status code
+      length:
+        description: Response text length
+      text:
+        description: Response text
+      cookies:
+        description: Response cookies
+      elapsed:
+        description: Time elapsed in seconds
+      error:
+        description: Error message if error occured, else False
