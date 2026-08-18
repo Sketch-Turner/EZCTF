@@ -162,7 +162,7 @@ class FilterNode(Node):
             data (dict): Updated filter configuration data.
         """
         self._filter.expression = data["expression"]
-        self._filter.valid = data["valid"]
+        self._filter.valid = Filter.validate(self._filter.expression)
 
     def run(self, input: dict) -> dict:
         """

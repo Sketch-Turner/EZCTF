@@ -214,6 +214,7 @@ class Workflow:
         """
         input['source_id'] = node.id
         output = node.run(input)
+
         if len(output) == 0:
             return
 
@@ -221,8 +222,21 @@ class Workflow:
         if len(next) == 0:
             return
 
-        for n in next:
-            self.dfs(n, output)
+        outputs = [output]
+
+        # Split on multi-output
+        if node.type == 'MODULE':
+            for module_out in node._module._outputs:
+                if module_out.properties:
+                    outputs = [
+                        {k: v for k, v in data.items() if k != module_out.name} | value
+                        for data in outputs
+                        for value in output[module_out.name]
+                    ]
+
+        for data in outputs:
+            for n in next:
+                self.dfs(n, data)
 
     def update_targets(self, target_pool:list):
         """

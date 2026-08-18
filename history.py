@@ -44,7 +44,7 @@ class History:
             source_id (str): Source associated with the log entry.
             message (str): Log message.
         """
-        print(f"LOG: {(time(), root_id, source_id, message)}")
+        print(f"LOG: {message} {root_id}")
         History._queue.put(History.Log(root_id, source_id, message))
 
     @staticmethod

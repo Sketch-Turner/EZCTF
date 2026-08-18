@@ -223,6 +223,6 @@ logging.getLogger("werkzeug").addFilter(IgnoreHistory())
 
 
 if __name__ == "__main__":
-    History.verbose = False
+    History.verbose = True
     threading.Thread(target=workflow.sync_history, args=(targets,), daemon=True).start()
     app.run(host="127.0.0.1", port=5000, debug=True)
