@@ -1,8 +1,21 @@
 class Display:
+    """
+    Represents display data.
+    """
+
     def __init__(self):
+        """
+        Initialize the display.
+        """
         self.data = set()
 
     def render(self) -> str:
+        """
+        Render the display HTML.
+
+        Returns:
+            str: HTML representation of the display.
+        """
         data = [Display.from_hashable(item) for item in self.data]
 
         fields = set()
@@ -33,6 +46,15 @@ class Display:
 
     @staticmethod
     def to_hashable(value):
+        """
+        Convert a value into a hashable representation.
+
+        Args:
+            value: Value to convert.
+
+        Returns:
+            Hashable representation of the value.
+        """
         if isinstance(value, dict):
             return tuple(sorted((key, Display.to_hashable(val)) for key, val in value.items()))
         if isinstance(value, (list, tuple)):
@@ -43,6 +65,15 @@ class Display:
 
     @staticmethod
     def from_hashable(value):
+        """
+        Revert hashable to original.
+
+        Args:
+            value: Value to convert.
+
+        Returns:
+            Original representation of the value.
+        """
         if isinstance(value, tuple):
             return {key: Display.from_hashable(val) for key, val in value}
         if isinstance(value, frozenset):
@@ -50,4 +81,10 @@ class Display:
         return value
 
     def add(self, data:dict):
+        """
+        Update display data.
+
+        Args:
+            input (dict): Data used to update display.
+        """
         self.data.add(Display.to_hashable(data))

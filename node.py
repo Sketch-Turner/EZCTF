@@ -136,10 +136,10 @@ class DisplayNode(Node):
 
     def render_config(self) -> str:
         """
-        Render the display configuration HTML.
+        Render the display HTML.
 
         Returns:
-            str: HTML representation of the display configuration.
+            str: HTML representation of the display.
         """
         return self._display.render()
 
