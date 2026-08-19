@@ -3,6 +3,7 @@ from target import Target
 from workflow import Workflow
 from module import Module
 from filter import Filter
+from display import Display
 from node import TargetNode
 import os
 import threading
@@ -49,7 +50,9 @@ def get_src_by_id(id: str, type: str) -> object:
             if id == "ALL":
                 return Target(list(target_pool))
         case "FILTER":
-            source = filters
+            return Filter(expression="")
+        case "DISPLAY":
+            return Display()
         case "MODULE":
             source = modules
 
@@ -62,7 +65,7 @@ def get_src_by_id(id: str, type: str) -> object:
 
 targets = [] # target objects
 target_pool = set() # list of all target ips
-filters = [Filter(expression="")] # filter templates
+# filters = [Filter(expression="")] # filter templates
 modules = load_module_configs() # module templates
 workflow = Workflow()
 
@@ -70,7 +73,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html", targets=targets, modules=modules, filters=filters)
+    return render_template("index.html", targets=targets, modules=modules)
 
 
 @app.route("/targets", methods=["POST"])

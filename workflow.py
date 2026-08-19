@@ -37,6 +37,9 @@ class Workflow:
             case "FILTER":
                 node = FilterNode(source, x, y)
 
+            case "DISPLAY":
+                node = DisplayNode(source, x, y)
+
             case "MODULE":
                 node = ModuleNode(source, x, y)
 
@@ -215,7 +218,7 @@ class Workflow:
         input['source_id'] = node.id
         output = node.run(input)
 
-        if len(output) == 0:
+        if output is None or len(output) == 0:
             return
 
         next = node.get_next()

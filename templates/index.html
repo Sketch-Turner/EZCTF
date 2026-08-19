@@ -157,16 +157,20 @@
                 {% endfor %}
             </div>
 
-            <h3>Filters</h3>
+            <h3>Utility</h3>
             <div class="workflow-list">
-                {% for filter in filters %}
                 <div class="workflow-item filter-item"
                     draggable="true"
-                    data-id="{{ filter.id }}"
+                    data-id="FILTER"
                     data-type="FILTER">
-                    New
+                    Filter
                 </div>
-                {% endfor %}
+                <div class="workflow-item filter-item"
+                    draggable="true"
+                    data-id="DISPLAY"
+                    data-type="DISPLAY">
+                    Display
+                </div>
             </div>
         </div>
 
@@ -585,11 +589,13 @@
         div.style.top = `${node.y}px`;
 
         addConnectionPoints(div);
-
         enableNodeDrag(div);
-        div.addEventListener("dblclick", () => {
-            openNodeConfig(div.dataset.id);
-        });
+
+        if (node.type != "TARGET") {
+            div.addEventListener("dblclick", () => {
+                openNodeConfig(node.id, node.type);
+            });
+        }
 
         workflowChain.appendChild(div);
     }
@@ -673,7 +679,9 @@
             case "TARGET":
                 addOutput(node);
                 break;
-
+            case "DISPLAY":
+                addInput(node);
+                break;
             case "MODULE":
             case "FILTER":
                 addInput(node);
@@ -1013,17 +1021,24 @@
      *
      * @async
      * @param {string} nodeId - ID of the node to configure.
+     * @param {string} nodeType - Node type.
      * @returns {Promise<void>}
      */
-    async function openNodeConfig(nodeId) {
+    async function openNodeConfig(nodeId, nodeType) {
         const response = await fetch(`/workflow/nodes/${nodeId}/config`);
         const html = await response.text();
 
         document.getElementById("node-config-body").innerHTML = html;
 
-        document.getElementById("config-save").onclick = () => {
-            saveNodeConfig(nodeId);
-        };
+        save = document.getElementById("config-save");
+        if (nodeType === "DISPLAY") {
+            save.style.display = "None";
+        } else {
+            save.style.display = "";
+            save.onclick = () => {
+                saveNodeConfig(nodeId);
+            };
+        }
 
         document
             .getElementById("node-config-dialog")

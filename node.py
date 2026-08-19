@@ -2,6 +2,7 @@ from uuid import uuid4
 from filter import Filter
 from target import Target
 from module import Module
+from display import Display
 from history import History
 
 class Node:
@@ -102,6 +103,55 @@ class TargetNode(Node):
         if not isinstance(ip_list, list):
             ip_list = [ip_list]
         return ip_list
+
+class DisplayNode(Node):
+    """
+    Workflow node for display.
+    """
+    def __init__(self, display:Display, x:int = 0, y:int = 0):
+        """
+        Initialize a filter workflow node.
+
+        Args:
+            x (int): X-coordinate position on the canvas.
+            y (int): Y-coordinate position on the canvas.
+        """
+        super().__init__(
+            type="DISPLAY",
+            x=x,
+            y=y
+        )
+        self._display = display
+
+    def render(self) -> str:
+        """
+        Render the display node HTML.
+
+        Returns:
+            str: HTML representation of the node.
+        """
+        return f"""
+            <div class="node-title">Display</div>
+        """
+
+    def render_config(self) -> str:
+        """
+        Render the display configuration HTML.
+
+        Returns:
+            str: HTML representation of the display configuration.
+        """
+        return self._display.render()
+
+
+    def run(self, input: dict):
+        """
+        Update display node.
+
+        Args:
+            input (dict): Data used to update display.
+        """
+        self._display.add(input)
 
 class FilterNode(Node):
     """
