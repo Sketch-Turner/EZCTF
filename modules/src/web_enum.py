@@ -67,8 +67,7 @@ def worker(url, scheduler, timeout, retry, method, cookies, data):
                 "attempts": attempt + 1,
                 "status": response.status_code,
                 "length": len(response.text),
-                "text": "",
-                # "text": response.text,
+                "text": response.text,
                 "cookies": response.cookies.get_dict(),
                 "elapsed": response.elapsed.total_seconds(),
                 "error": False
