@@ -203,6 +203,21 @@
 
 </div>
 
+<div id="file-picker" class="file-picker">
+    <div class="file-picker-header">
+        <button id="file-picker-back">←</button>
+        <span id="file-picker-path"></span>
+    </div>
+
+    <div id="file-picker-contents" class="file-picker-contents"></div>
+
+    <div class="file-picker-footer">
+        <input id="file-picker-name" type="text">
+        <button id="file-picker-cancel">Cancel</button>
+        <button id="file-picker-open">Open</button>
+    </div>
+</div>
+
 <script>
     /**
      * Switch the active content tab.
@@ -1053,30 +1068,29 @@
      * @returns {Promise<void>}
      */
     async function saveNodeConfig(nodeId) {
-        const formData = new FormData();
+        const data = {};
 
-        document
+        const fields = document
             .getElementById("node-config-body")
-            .querySelectorAll("input, textarea, select")
-            .forEach(field => {
-                if (!field.name)
-                    return;
+            .querySelectorAll("input, textarea, select, span.file-input-name");
 
-                if (field.type === "file") {
-                    if (field.files.length)
-                        formData.append(field.name, field.files[0]);
-                } else {
-                    formData.append(field.name, field.value);
-                }
-            });
 
-        const response = await fetch(
-            `/workflow/nodes/${nodeId}/config`,
-            {
-                method: "PUT",
-                body: formData
-            }
-        );
+        for (const field of fields) {
+            const name = field.name || field.dataset.name;
+
+            if (!name)
+                continue;
+
+            data[name] = field.dataset.path ?? field.value;
+        }
+
+        const response = await fetch(`/workflow/nodes/${nodeId}/config`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
 
         if (!response.ok)
             return;
@@ -1084,7 +1098,6 @@
         const node = await response.json();
 
         updateWorkflowNode(node);
-
         closeNodeConfig();
     }
 
@@ -1221,6 +1234,151 @@
     }
     // Check hist every 100 ms
     setInterval(refreshHistory, 100);
+
+    async function openFileBrowser() {
+        const picker = document.getElementById("file-picker");
+        const contents = document.getElementById("file-picker-contents");
+        const pathLabel = document.getElementById("file-picker-path");
+        const back = document.getElementById("file-picker-back");
+        const filename = document.getElementById("file-picker-name");
+        const open = document.getElementById("file-picker-open");
+        const cancel = document.getElementById("file-picker-cancel");
+
+        let currentPath = null;
+        let selectedFile = null;
+        let resolve;
+
+        const result = new Promise(r => {
+            resolve = r;
+        });
+
+        async function loadDirectory(path = "") {
+            const response = await fetch(
+                `/filesystem?path=${encodeURIComponent(path)}`
+            );
+
+            if (!response.ok)
+                return;
+
+            const data = await response.json();
+
+            currentPath = data.path;
+            selectedFile = null;
+
+            pathLabel.textContent = currentPath;
+            filename.value = "";
+            contents.innerHTML = "";
+
+            const index = Math.max(
+                currentPath.lastIndexOf("/"),
+                currentPath.lastIndexOf("\\")
+            );
+
+            back.disabled =
+                currentPath === "/" ||
+                /^[A-Za-z]:\\?$/.test(currentPath);
+
+            back.onclick = () => {
+                if (currentPath === "/" || /^[A-Za-z]:\\?$/.test(currentPath))
+                    return;
+
+                const index = Math.max(
+                    currentPath.lastIndexOf("/"),
+                    currentPath.lastIndexOf("\\")
+                );
+
+                if (index < 0)
+                    return;
+
+                let parent = currentPath.substring(0, index);
+
+                if (!parent)
+                    parent = "/";
+
+                if (/^[A-Za-z]:$/.test(parent))
+                    parent += "\\";
+
+                loadDirectory(parent);
+            };
+
+            for (const directory of data.directories) {
+                const element = document.createElement("div");
+
+                element.className = "file-picker-item";
+                element.textContent = `📁 ${directory.name}`;
+
+                element.ondblclick = () => {
+                    loadDirectory(directory.path);
+                };
+
+                contents.appendChild(element);
+            }
+
+            for (const file of data.files) {
+                const element = document.createElement("div");
+
+                element.className = "file-picker-item";
+                element.textContent = `📄 ${file.name}`;
+
+                element.onclick = () => {
+                    contents
+                        .querySelectorAll(".file-picker-item")
+                        .forEach(item => item.classList.remove("selected"));
+
+                    element.classList.add("selected");
+
+                    selectedFile = file.path;
+                    filename.value = file.name;
+                };
+
+                contents.appendChild(element);
+            }
+        }
+
+        function finish(filepath) {
+            picker.style.display = "none";
+            resolve(filepath);
+        }
+
+        open.onclick = async () => {
+            if (!filename.value)
+                return;
+
+            if (selectedFile && filename.value === selectedFile.split(/[\\/]/).pop()) {
+                finish(selectedFile);
+                return;
+            }
+
+            const response = await fetch(
+                `/filesystem?path=${encodeURIComponent(currentPath)}`
+            );
+
+            if (!response.ok)
+                return;
+
+            const data = await response.json();
+
+            const file = data.files.find(
+                file => file.name === filename.value
+            );
+
+            if (file)
+                finish(file.path);
+        };
+
+        cancel.onclick = () => {
+            picker.style.display = "none";
+            resolve(null);
+        };
+
+        picker.style.display = "flex";
+
+        await loadDirectory();
+
+        return result;
+    }
+
+
 
 
 </script>

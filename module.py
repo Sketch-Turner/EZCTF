@@ -29,8 +29,6 @@ class ModuleInput:
         self.input_type = input_type
         self.description = description
 
-        if "FILE" in input_type:
-            self._file = None
 
 class ModuleOutput:
     """
@@ -143,13 +141,7 @@ class Module:
             data (dict): New input values keyed by input name.
         """
         for input in self._inputs:
-            if "FILE" in input.input_type:
-                file = data.get(input.name)
-                if file:
-                    input.value = file.filename
-                    input._file = file.read()
-            else:
-                input.value = data.get(input.name, input.value)
+            input.value = data.get(input.name, input.value)
 
     def copy(self) -> "Module":
         """

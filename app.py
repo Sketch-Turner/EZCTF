@@ -194,16 +194,11 @@ def update_node_config(node_id):
     node = workflow.get_node(node_id)
 
     if not isinstance(node, TargetNode):
-        data = request.form.to_dict()
-
-        for name, file in request.files.items():
-            data[name] = file
-
+        data = request.get_json()
         node.update_config(data)
 
     return jsonify({
         **node.to_dict(),
-        "html": node.render()
     })
 
 @app.route("/workflow/run")
@@ -213,6 +208,33 @@ def run_workflow():
     return jsonify({
             "success": True
         })
+
+@app.route("/filesystem")
+def filesystem():
+    path = Path(request.args.get("path", Path.home())).resolve()
+
+    directories = []
+    files = []
+
+    for entry in path.iterdir():
+        entry = entry.resolve()
+
+        data = {
+            "name": entry.name,
+            "path": str(entry)
+        }
+
+        if entry.is_dir():
+            directories.append(data)
+        else:
+            files.append(data)
+
+    return {
+        "path": str(path),
+        "directories": directories,
+        "files": files
+    }
+
 
 
 import logging

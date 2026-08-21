@@ -265,11 +265,12 @@ class ModuleNode(Node):
         Returns:
             str: HTML representation of the node.
         """
-        inputs = "".join(
-            f'<div class="node-input"><span>{input.name}: </span><span>{input.value}</span></div>'
-            for input in self._module._inputs
-            if "CONFIG" in input.input_type
-        )
+        inputs = ""
+        for input in self._module._inputs:
+            if "CONFIG" in input.input_type:
+                
+                value = str(input.value).replace("\\", "/").split("/")[-1] if "FILE" in input.input_type else input.value
+                inputs += f'<div class="node-input"><span>{input.name}: </span><span>{value}</span></div>'
 
         return f"""
             <div class="node-title">Module</div>
@@ -295,14 +296,33 @@ class ModuleNode(Node):
             if "FILE" in input.input_type:
                 field = f"""
                 <div class="config-group">
-                    <label for="{input.name}">{input.name}</label>
+                    <label>{input.name}</label>
 
-                    <input
-                        id="{input.name}"
-                        name="{input.name}"
-                        type="file"
-                        class="config-input"
-                    >
+                    <div class="file-input">
+                        <span
+                            class="file-input-name"
+                            data-name="{input.name}"
+                            data-path=""
+                        >
+                            No file selected
+                        </span>
+
+                        <button
+                            type="button"
+                            class="file-input-btn"
+                            onclick="
+                                openFileBrowser().then(filepath => {{
+                                    if (filepath) {{
+                                        this.previousElementSibling.dataset.path = filepath;
+                                        this.previousElementSibling.textContent =
+                                            filepath.split(/[\\\\/]/).pop();
+                                    }}
+                                }})
+                            "
+                        >
+                            Browse
+                        </button>
+                    </div>
                 </div>
                 """
             else:
